@@ -1,0 +1,97 @@
+# Build outputs
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Build artifacts
+*.exe
+*.dll
+*.pdb
+*.xml
+*.cache
+*.resources
+
+# Visual Studio
+.vs/
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.tmp_proj
+*.vspscc
+*.vssscc
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# TeamCity
+_TeamCity*
+
+# DotCover
+*.dotCover
+
+# NDepend
+NDependOut/
+
+# StyleCop
+StyleCop.Cache
+
+# NuGet
+packages/
+*.nupkg
+*.nuget.targets
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Tekla-specific
+# Keep Tekla references in project file, but exclude local copies
+Tekla.Structures*.dll
+Tekla.Common*.dll
+Tekla.BIM*.dll
+
+# Exception: Keep these specific files (uncomment if needed)
+# !bin/Release/TeklaPlugin.dll
+# !bin/Release/TeklaPlugin.exe
+
+# Documentation and scripts (keep these)
+# !*.md
+# !*.bat
+# !README*
