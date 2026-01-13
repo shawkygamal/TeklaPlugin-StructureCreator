@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -49,7 +49,7 @@ namespace TeklaPlugin.Forms.Main
                        circularDistanceTextBox, circularOffsetXTextBox, circularOffsetYTextBox;
 
         // Cap Parameters
-        private TextBox capHTextBox, capBTextBox, capWTextBox, capPTextBox, capSlopeHeightTextBox;
+        private TextBox capTopLengthTextBox, capBottomLengthTextBox, capHeightTextBox, capWidthTextBox, capPTextBox;
 
         // Material Dropdowns
         private ComboBox foundationMaterialComboBox, matMaterialComboBox, pilesMaterialComboBox,
@@ -225,15 +225,15 @@ namespace TeklaPlugin.Forms.Main
             int yPos = 20;
 
             // Cap Dimensions
-            AddLabelAndTextBox(tab, "H (Height) - mm:", ref capHTextBox, "500", 20, yPos);
+            AddLabelAndTextBox(tab, "Top Length - mm:", ref capTopLengthTextBox, "4000", 20, yPos);
             yPos += 35;
-            AddLabelAndTextBox(tab, "B (Top Width) - mm:", ref capBTextBox, "2000", 20, yPos);
+            AddLabelAndTextBox(tab, "Bottom Length - mm:", ref capBottomLengthTextBox, "2000", 20, yPos);
             yPos += 35;
-            AddLabelAndTextBox(tab, "W (Depth) - mm:", ref capWTextBox, "4000", 20, yPos);
+            AddLabelAndTextBox(tab, "Height - mm:", ref capHeightTextBox, "500", 20, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Width - mm:", ref capWidthTextBox, "600", 20, yPos);
             yPos += 35;
             AddLabelAndTextBox(tab, "P (Offset from Center) - mm:", ref capPTextBox, "0", 20, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Slope Height (mm):", ref capSlopeHeightTextBox, "250", 20, yPos);
             yPos += 35;
 
             // Material & Class
@@ -1043,11 +1043,11 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(circularOffsetXTextBox, "0");
             SetupTextBox(circularOffsetYTextBox, "0");
 
-            SetupTextBox(capHTextBox, "500");
-            SetupTextBox(capBTextBox, "2000");
-            SetupTextBox(capWTextBox, "4000");
+            SetupTextBox(capTopLengthTextBox, "4000");
+            SetupTextBox(capBottomLengthTextBox, "2000");
+            SetupTextBox(capHeightTextBox, "500");
+            SetupTextBox(capWidthTextBox, "600");
             SetupTextBox(capPTextBox, "0");
-            SetupTextBox(capSlopeHeightTextBox, "250");
         }
 
         private void SetupTextBox(TextBox textBox, string defaultValue = "")
@@ -1292,11 +1292,11 @@ namespace TeklaPlugin.Forms.Main
 
                 var capParams = new TeklaPlugin.Services.Cap.Models.CapParameters
                 {
-                    H = double.Parse(capHTextBox.Text),
-                    B = double.Parse(capBTextBox.Text),
-                    W = double.Parse(capWTextBox.Text),
+                    TopLength = double.Parse(capTopLengthTextBox.Text),
+                    BottomLength = double.Parse(capBottomLengthTextBox.Text),
+                    Height = double.Parse(capHeightTextBox.Text),
+                    Width = double.Parse(capWidthTextBox.Text),
                     P = double.Parse(capPTextBox.Text),
-                    SlopeHeight = double.Parse(capSlopeHeightTextBox.Text),
                     Material = capMaterialComboBox.SelectedItem?.ToString() ?? "C12/15",
                     Class = capClassComboBox.SelectedItem?.ToString() ?? "8"
                 };
