@@ -27,8 +27,8 @@ namespace TeklaPlugin.Services.Mat
             matBeam.StartPoint = new Point(global.PositionX, global.PositionY, global.PositionZ - foundation.Height);
             matBeam.EndPoint = new Point(global.PositionX, global.PositionY, global.PositionZ - foundation.Height - mat.Thickness);
             matBeam.Profile = new Profile { ProfileString = $"{widthi_mat + 2 * mat.Cantilever}*{foundation.Length + 2 * mat.Cantilever}" };
-            matBeam.Material = new Material { MaterialString = "C12/15" };
-            matBeam.Class = "1";
+            matBeam.Material = new Material { MaterialString = mat.Material };
+            matBeam.Class = mat.Class;
             matBeam.Position.Rotation = Position.RotationEnum.FRONT;
             matBeam.Position.RotationOffset = -global.RotationAngle;
             matBeam.Position.Plane = Position.PlaneEnum.MIDDLE;

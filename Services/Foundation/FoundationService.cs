@@ -32,8 +32,8 @@ namespace TeklaPlugin.Services.Foundation
             foundationBeam.StartPoint = new Point(global.PositionX, global.PositionY, global.PositionZ);
             foundationBeam.EndPoint = new Point(global.PositionX, global.PositionY, global.PositionZ - foundation.Height);
             foundationBeam.Profile = new Profile { ProfileString = $"{widthi}*{foundation.Length}" };
-            foundationBeam.Material = new Material { MaterialString = "C50/60" };
-            foundationBeam.Class = "8";
+            foundationBeam.Material = new Material { MaterialString = foundation.Material };
+            foundationBeam.Class = foundation.Class;
             foundationBeam.Position.Rotation = Position.RotationEnum.FRONT;
             foundationBeam.Position.RotationOffset = -global.RotationAngle;
             foundationBeam.Position.Plane = Position.PlaneEnum.MIDDLE;

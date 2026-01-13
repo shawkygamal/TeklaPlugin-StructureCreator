@@ -43,8 +43,8 @@ namespace TeklaPlugin.Services.Cap
             capBeam.StartPoint = new Point(finalX, finalY, finalZ_top);
             capBeam.EndPoint = new Point(finalX, finalY, finalZ_bottom);
             capBeam.Profile = new Profile { ProfileString = $"{widthi_cap}*{cap.W}" }; // B (width) x W (depth)
-            capBeam.Material = new Material { MaterialString = "C12/15" };
-            capBeam.Class = "8";
+            capBeam.Material = new Material { MaterialString = cap.Material };
+            capBeam.Class = cap.Class;
             capBeam.Position.Rotation = Position.RotationEnum.FRONT;
             capBeam.Position.RotationOffset = -global.RotationAngle;
             capBeam.Position.Plane = Position.PlaneEnum.MIDDLE;

@@ -47,8 +47,8 @@ namespace TeklaPlugin.Services.Piles
                     pile.StartPoint = new Point(pozX_rotated, pozY_rotated, pozZ_upper);
                     pile.EndPoint = new Point(pozX_rotated, pozY_rotated, pozZ_lower);
                     pile.Profile = new Profile { ProfileString = $"D{piles.Diameter}" };
-                    pile.Material = new Material { MaterialString = "C50/60" };
-                    pile.Class = "8";
+                    pile.Material = new Material { MaterialString = piles.Material };
+                    pile.Class = piles.Class;
                     pile.Position.Rotation = Position.RotationEnum.FRONT;
                     pile.Position.RotationOffset = global.RotationAngle;
                     pile.Position.Plane = Position.PlaneEnum.MIDDLE;

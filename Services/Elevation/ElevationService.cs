@@ -22,8 +22,8 @@ namespace TeklaPlugin.Services.Elevation
             elevationLamelar.StartPoint = new Point(global.PositionX, global.PositionY, global.PositionZ);
             elevationLamelar.EndPoint = new Point(global.PositionX, global.PositionY, global.PositionZ + lamelar.Height);
             elevationLamelar.Profile = new Profile { ProfileString = $"{lamelar.Width}*{lamelar.Thickness}" };
-            elevationLamelar.Material = new Material { MaterialString = "C50/60" };
-            elevationLamelar.Class = "8";
+            elevationLamelar.Material = new Material { MaterialString = lamelar.Material };
+            elevationLamelar.Class = lamelar.Class;
             elevationLamelar.Position.Rotation = Position.RotationEnum.FRONT;
             elevationLamelar.Position.RotationOffset = global.RotationAngle;
             elevationLamelar.Position.Plane = Position.PlaneEnum.MIDDLE;
@@ -50,8 +50,8 @@ namespace TeklaPlugin.Services.Elevation
                 elevationCircular.StartPoint = new Point(pozX_rotated, pozY_rotated, global.PositionZ);
                 elevationCircular.EndPoint = new Point(pozX_rotated, pozY_rotated, global.PositionZ + circular.Height);
                 elevationCircular.Profile = new Profile { ProfileString = $"D{circular.Diameter}" };
-                elevationCircular.Material = new Material { MaterialString = "C50/60" };
-                elevationCircular.Class = "8";
+                elevationCircular.Material = new Material { MaterialString = circular.Material };
+                elevationCircular.Class = circular.Class;
                 elevationCircular.Position.Rotation = Position.RotationEnum.FRONT;
                 elevationCircular.Position.RotationOffset = global.RotationAngle;
                 elevationCircular.Position.Plane = Position.PlaneEnum.MIDDLE;

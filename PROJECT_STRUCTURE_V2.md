@@ -25,23 +25,30 @@ Services/
 ├── Foundation/                    # Foundation services & models
 │   ├── FoundationService.cs           # Foundation beams + rebar creation
 │   └── Models/
-│       └── FoundationParameters.cs        # Foundation dimensions (W, L, H)
+│       └── FoundationParameters.cs        # Foundation dimensions (W, L, H, Material, Class)
 ├── Mat/                           # Mat foundation services & models
 │   ├── MatService.cs                  # Mat foundation creation
 │   └── Models/
-│       └── MatParameters.cs               # Mat specifications (Cantilever, Thickness)
+│       └── MatParameters.cs               # Mat specifications (Cantilever, Thickness, Material, Class)
 ├── Piles/                         # Pile services & models
 │   ├── PilesService.cs                # Pile grid creation
 │   └── Models/
-│       └── PileParameters.cs              # Pile layout (Rows, Columns, spacing, etc.)
+│       └── PileParameters.cs              # Pile layout (Rows, Columns, spacing, Material, Class)
 ├── Elevation/                     # Elevation/column services & models
 │   ├── ElevationService.cs            # Lamelar/circular column creation
 │   └── Models/
-│       └── ElevationParameters.cs         # Column specifications (Lamelar/Circular)
+│       └── ElevationParameters.cs         # Column specifications (Lamelar/Circular, Material, Class)
 └── Cap/                           # Cap beam services & models
     ├── CapService.cs                  # Trapezoidal cap beam creation
     └── Models/
-        └── CapParameters.cs               # Cap dimensions (H, B, W, P, SlopeHeight)
+        └── CapParameters.cs               # Cap dimensions (H, B, W, P, SlopeHeight, Material, Class)
+```
+
+### 🔍 TeklaQueries/
+**Purpose:** Services for querying Tekla-specific data
+```
+TeklaQueries/
+└── MaterialsService.cs             # Material catalog access service
 ```
 
 ### 📄 Root Files/
@@ -97,6 +104,36 @@ Tekla Model (Final structure)
 - Add new services with their models in dedicated folders
 - Extend existing services without affecting others
 - Models can be versioned with their services
+
+## 🎨 Material Selection Features
+
+### Dynamic Material Dropdowns
+Each component tab now includes material selection dropdowns populated with:
+- **Foundation:** Concrete materials (C12/15 to C90/105) + Class selection (default "8")
+- **Mat:** Concrete materials (default C12/15) + Class selection (default "1")
+- **Piles:** Concrete materials (default C50/60) + Class selection (default "8")
+- **Elevation:** Concrete materials for both lamelar and circular (default C50/60) + Class selection (default "8")
+- **Cap:** Concrete materials (default C12/15) + Class selection (default "8")
+
+### Class Selection
+All component tabs include class dropdowns with values 1-10:
+- **Foundation:** Default "8" (structural concrete)
+- **Mat:** Default "1" (mat foundation)
+- **Piles:** Default "8" (structural concrete)
+- **Elevation:** Default "8" (columns/beams)
+- **Cap:** Default "8" (cap beams)
+
+### Material Service Architecture
+- **TeklaQueries/MaterialsService.cs**: Provides material catalog access
+- **Fallback Materials**: Comprehensive list of common concrete and steel grades
+- **Validation**: Ensures selected materials are valid
+- **Extensible**: Easy to add new material categories
+
+### User Experience
+- **Pre-populated Dropdowns**: All material options loaded on form startup
+- **Default Selections**: Sensible defaults for each component type
+- **Real-time Updates**: Material changes applied immediately
+- **Error Handling**: Graceful fallback if material loading fails
 
 ### ✅ Professional Structure
 - Follows domain-driven design principles

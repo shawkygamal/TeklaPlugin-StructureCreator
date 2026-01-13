@@ -19,6 +19,7 @@ using TeklaPlugin.Services.Mat.Models;
 using TeklaPlugin.Services.Piles.Models;
 using TeklaPlugin.Services.Elevation.Models;
 using TeklaPlugin.Services.Cap.Models;
+using TeklaPlugin.TeklaQueries;
 
 namespace TeklaPlugin.Forms.Main
 {
@@ -50,10 +51,28 @@ namespace TeklaPlugin.Forms.Main
         // Cap Parameters
         private TextBox capHTextBox, capBTextBox, capWTextBox, capPTextBox, capSlopeHeightTextBox;
 
+        // Material Dropdowns
+        private ComboBox foundationMaterialComboBox, matMaterialComboBox, pilesMaterialComboBox,
+                         lamelarMaterialComboBox, circularMaterialComboBox, capMaterialComboBox;
+
+        // Class Dropdowns
+        private ComboBox foundationClassComboBox, matClassComboBox, pilesClassComboBox,
+                         lamelarClassComboBox, circularClassComboBox, capClassComboBox;
+
+        // Materials Service
+        private MaterialsService _materialsService;
+
         public StructureCreatorForm()
         {
             InitializeComponent();
             InitializeCustomComponents();
+
+            // Initialize materials service
+            var model = new Tekla.Structures.Model.Model();
+            _materialsService = new MaterialsService(model);
+
+            // Load materials into dropdowns
+            LoadMaterials();
         }
 
         private void InitializeCustomComponents()
@@ -131,6 +150,14 @@ namespace TeklaPlugin.Forms.Main
 
             // Height
             AddLabelAndTextBox(tab, "Height:", ref foundationHeightTextBox, "600", 20, yPos);
+            yPos += 30;
+
+            // Material
+            AddLabelAndComboBox(tab, "Material:", ref foundationMaterialComboBox, 20, yPos);
+            yPos += 30;
+
+            // Class
+            AddLabelAndComboBox(tab, "Class:", ref foundationClassComboBox, 20, yPos);
         }
 
         private void CreateMatTab()
@@ -146,6 +173,14 @@ namespace TeklaPlugin.Forms.Main
 
             // Thickness
             AddLabelAndTextBox(tab, "Thickness:", ref matThicknessTextBox, "200", 20, yPos);
+            yPos += 30;
+
+            // Material
+            AddLabelAndComboBox(tab, "Material:", ref matMaterialComboBox, 20, yPos);
+            yPos += 30;
+
+            // Class
+            AddLabelAndComboBox(tab, "Class:", ref matClassComboBox, 20, yPos);
         }
 
         private void CreatePilesTab()
@@ -181,6 +216,14 @@ namespace TeklaPlugin.Forms.Main
 
             // Embedded Length
             AddLabelAndTextBox(tab, "Embedded Length:", ref pileEmbeddedLengthTextBox, "2000", 20, yPos);
+            yPos += 30;
+
+            // Material
+            AddLabelAndComboBox(tab, "Material:", ref pilesMaterialComboBox, 20, yPos);
+            yPos += 30;
+
+            // Class
+            AddLabelAndComboBox(tab, "Class:", ref pilesClassComboBox, 20, yPos);
         }
 
         private void CreateElevationTab()
@@ -213,6 +256,12 @@ namespace TeklaPlugin.Forms.Main
             yPos += 30;
             AddLabelAndTextBox(tab, "Height:", ref lamelarHeightTextBox, "8000", 20, yPos);
             yPos += 30;
+            AddLabelAndComboBox(tab, "Material:", ref lamelarMaterialComboBox, 20, yPos);
+            yPos += 30;
+
+            // Class
+            AddLabelAndComboBox(tab, "Class:", ref lamelarClassComboBox, 20, yPos);
+            yPos += 30;
 
             // Circular controls (initially hidden)
             yPos += 20; // Gap
@@ -233,6 +282,12 @@ namespace TeklaPlugin.Forms.Main
             yPos += 30;
             AddLabelAndTextBox(tab, "Offset Y:", ref circularOffsetYTextBox, "0", 20, yPos);
             circularOffsetYTextBox.Visible = false;
+            yPos += 30;
+            AddLabelAndComboBox(tab, "Material:", ref circularMaterialComboBox, 20, yPos);
+            circularMaterialComboBox.Visible = false;
+            yPos += 30;
+            AddLabelAndComboBox(tab, "Class:", ref circularClassComboBox, 20, yPos);
+            circularClassComboBox.Visible = false;
         }
 
         private void CreateCapTab()
@@ -260,6 +315,64 @@ namespace TeklaPlugin.Forms.Main
 
             // Slope Height - Where the trapezoidal slope starts
             AddLabelAndTextBox(tab, "Slope Height:", ref capSlopeHeightTextBox, "250", 20, yPos);
+            yPos += 30;
+
+            // Material
+            AddLabelAndComboBox(tab, "Material:", ref capMaterialComboBox, 20, yPos);
+            yPos += 30;
+
+            // Class
+            AddLabelAndComboBox(tab, "Class:", ref capClassComboBox, 20, yPos);
+        }
+
+        private void LoadMaterials()
+        {
+            try
+            {
+                var concreteMaterials = _materialsService.GetConcreteMaterials();
+
+                if (concreteMaterials.Count == 0)
+                {
+                    // Fallback materials if Tekla catalog is not accessible
+                    concreteMaterials.AddRange(new[] { "C12/15", "C16/20", "C20/25", "C25/30", "C30/37", "C35/45", "C40/50", "C45/55", "C50/60", "C55/67", "C60/75" });
+                }
+
+                // Populate all material dropdowns
+                foundationMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
+                matMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
+                pilesMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
+                lamelarMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
+                circularMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
+                capMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
+
+                // Populate class dropdowns
+                var commonClasses = new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" };
+                foundationClassComboBox.Items.AddRange(commonClasses);
+                matClassComboBox.Items.AddRange(commonClasses);
+                pilesClassComboBox.Items.AddRange(commonClasses);
+                lamelarClassComboBox.Items.AddRange(commonClasses);
+                circularClassComboBox.Items.AddRange(commonClasses);
+                capClassComboBox.Items.AddRange(commonClasses);
+
+                // Set default selections
+                foundationMaterialComboBox.SelectedItem = "C50/60";
+                foundationClassComboBox.SelectedItem = "8";
+                matMaterialComboBox.SelectedItem = "C12/15";
+                matClassComboBox.SelectedItem = "1";
+                pilesMaterialComboBox.SelectedItem = "C50/60";
+                pilesClassComboBox.SelectedItem = "8";
+                lamelarMaterialComboBox.SelectedItem = "C50/60";
+                lamelarClassComboBox.SelectedItem = "8";
+                circularMaterialComboBox.SelectedItem = "C50/60";
+                circularClassComboBox.SelectedItem = "8";
+                capMaterialComboBox.SelectedItem = "C12/15";
+                capClassComboBox.SelectedItem = "8";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading materials: {ex.Message}", "Material Loading Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void AddLabelAndTextBox(Control parent, string labelText, ref TextBox textBox, string defaultValue, int x, int y)
@@ -277,6 +390,21 @@ namespace TeklaPlugin.Forms.Main
             parent.Controls.Add(textBox);
         }
 
+        private void AddLabelAndComboBox(Control parent, string labelText, ref ComboBox comboBox, int x, int y)
+        {
+            Label label = new Label();
+            label.Text = labelText;
+            label.Location = new DrawingPoint(x, y);
+            label.Size = new Size(150, 20);
+            parent.Controls.Add(label);
+
+            comboBox = new ComboBox();
+            comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox.Location = new DrawingPoint(x + 160, y);
+            comboBox.Size = new Size(120, 20);
+            parent.Controls.Add(comboBox);
+        }
+
         private void ElevationType_Changed(object sender, EventArgs e)
         {
             bool isLamelar = lamelarRadioButton.Checked;
@@ -284,6 +412,8 @@ namespace TeklaPlugin.Forms.Main
             lamelarWidthTextBox.Visible = isLamelar;
             lamelarThicknessTextBox.Visible = isLamelar;
             lamelarHeightTextBox.Visible = isLamelar;
+            lamelarMaterialComboBox.Visible = isLamelar;
+            lamelarClassComboBox.Visible = isLamelar;
 
             circularDiameterTextBox.Visible = !isLamelar;
             circularHeightTextBox.Visible = !isLamelar;
@@ -291,6 +421,8 @@ namespace TeklaPlugin.Forms.Main
             circularDistanceTextBox.Visible = !isLamelar;
             circularOffsetXTextBox.Visible = !isLamelar;
             circularOffsetYTextBox.Visible = !isLamelar;
+            circularMaterialComboBox.Visible = !isLamelar;
+            circularClassComboBox.Visible = !isLamelar;
         }
 
         private void CreateStructureButton_Click(object sender, EventArgs e)
@@ -339,13 +471,17 @@ namespace TeklaPlugin.Forms.Main
                 {
                     Width = double.Parse(foundationWidthTextBox.Text),
                     Length = double.Parse(foundationLengthTextBox.Text),
-                    Height = double.Parse(foundationHeightTextBox.Text)
+                    Height = double.Parse(foundationHeightTextBox.Text),
+                    Material = foundationMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
+                    Class = foundationClassComboBox.SelectedItem?.ToString() ?? "8"
                 };
 
                 var matParams = new TeklaPlugin.Services.Mat.Models.MatParameters
                 {
                     Cantilever = double.Parse(matCantileverTextBox.Text),
-                    Thickness = double.Parse(matThicknessTextBox.Text)
+                    Thickness = double.Parse(matThicknessTextBox.Text),
+                    Material = matMaterialComboBox.SelectedItem?.ToString() ?? "C12/15",
+                    Class = matClassComboBox.SelectedItem?.ToString() ?? "1"
                 };
 
                 var pileParams = new TeklaPlugin.Services.Piles.Models.PileParameters
@@ -356,7 +492,9 @@ namespace TeklaPlugin.Forms.Main
                     ColumnDistance = double.Parse(pileColumnDistanceTextBox.Text),
                     Length = double.Parse(pileLengthTextBox.Text),
                     Diameter = double.Parse(pileDiameterTextBox.Text),
-                    EmbeddedLength = double.Parse(pileEmbeddedLengthTextBox.Text)
+                    EmbeddedLength = double.Parse(pileEmbeddedLengthTextBox.Text),
+                    Material = pilesMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
+                    Class = pilesClassComboBox.SelectedItem?.ToString() ?? "8"
                 };
 
                 // Determine elevation type and collect parameters
@@ -366,7 +504,9 @@ namespace TeklaPlugin.Forms.Main
                 {
                     Width = double.Parse(lamelarWidthTextBox.Text),
                     Thickness = double.Parse(lamelarThicknessTextBox.Text),
-                    Height = double.Parse(lamelarHeightTextBox.Text)
+                    Height = double.Parse(lamelarHeightTextBox.Text),
+                    Material = lamelarMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
+                    Class = lamelarClassComboBox.SelectedItem?.ToString() ?? "8"
                 };
 
                 var circularParams = new TeklaPlugin.Services.Elevation.Models.CircularElevationParameters
@@ -376,7 +516,9 @@ namespace TeklaPlugin.Forms.Main
                     NumberOfColumns = int.Parse(circularColumnsTextBox.Text),
                     DistanceBetweenColumns = double.Parse(circularDistanceTextBox.Text),
                     OffsetX = double.Parse(circularOffsetXTextBox.Text),
-                    OffsetY = double.Parse(circularOffsetYTextBox.Text)
+                    OffsetY = double.Parse(circularOffsetYTextBox.Text),
+                    Material = circularMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
+                    Class = circularClassComboBox.SelectedItem?.ToString() ?? "8"
                 };
 
                 var capParams = new TeklaPlugin.Services.Cap.Models.CapParameters
@@ -385,7 +527,9 @@ namespace TeklaPlugin.Forms.Main
                     B = double.Parse(capBTextBox.Text),
                     W = double.Parse(capWTextBox.Text),
                     P = double.Parse(capPTextBox.Text),
-                    SlopeHeight = double.Parse(capSlopeHeightTextBox.Text)
+                    SlopeHeight = double.Parse(capSlopeHeightTextBox.Text),
+                    Material = capMaterialComboBox.SelectedItem?.ToString() ?? "C12/15",
+                    Class = capClassComboBox.SelectedItem?.ToString() ?? "8"
                 };
 
                 // Create the complete structure using the unified service
