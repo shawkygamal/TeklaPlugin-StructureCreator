@@ -44,6 +44,13 @@ Services/
         └── CapParameters.cs               # Cap dimensions (H, B, W, P, SlopeHeight, Material, Class)
 ```
 
+### 🎨 Assets/
+**Purpose:** Branding and visual assets
+```
+Assets/
+└── InfraNovaLogo.webp             # Company logo for UI branding
+```
+
 ### 🔍 TeklaQueries/
 **Purpose:** Services for querying Tekla-specific data
 ```
@@ -105,7 +112,38 @@ Tekla Model (Final structure)
 - Extend existing services without affecting others
 - Models can be versioned with their services
 
-## 🎨 Material Selection Features
+## 🎨 Modern UI & Material Selection Features
+
+### Branded Modern User Interface
+- **InfraNova Logo:** Prominent company logo embedded as resource in header (with fallback text logo)
+- **Application Icon:** InfraNova logo set as the form's window icon for professional branding
+- **Professional Header:** Gray header panel with logo, title, and subtitle
+- **Company Branding:** "Powered by InfraNova" branding text
+- **Copyright Footer:** Professional copyright and version information at bottom
+- **Clean Layout:** Simple tabbed interface with accessible input fields
+- **Direct Input:** All textboxes placed directly on tabs for immediate access
+- **Modern Styling:** Segoe UI fonts, flat buttons, consistent colors
+- **Easy Navigation:** Clear tab structure without nested complexity
+- **Fully Accessible:** All controls are clickable and accept input immediately
+- **Tooltips:** Helpful tooltips for guidance
+
+### Enhanced Per-Tab Visualizations with Parameter Labels
+- **Interactive Parameter-Labeled Diagrams:** Detailed visualizations showing parameter relationships
+- **Auto-Update:** Visualizations refresh automatically when switching tabs
+- **Dimension Indicators:** Color-coded arrows and labels showing:
+  - **Blue labels:** Foundation dimensions (Width, Length, Height)
+  - **Green labels:** Mat dimensions (Cantilever, Thickness)
+  - **Purple labels:** Pile dimensions (Row/Column spacing, Diameter)
+  - **Red labels:** Elevation dimensions (Width, Height, Diameter, Distance)
+  - **Orange labels:** Cap dimensions (H-Height, B-Top Width, Slope)
+- **Enhanced Component Illustrations:**
+  - **Global:** X/Y coordinate system with reference grid and axes
+  - **Foundation:** 3D isometric block with Width × Length × Height dimension arrows
+  - **Mat:** Slab above foundation showing cantilever extensions and thickness relationships
+  - **Piles:** 3×3 grid with spacing indicators, diameter circles, and layout dimensions
+  - **Elevation:** Column(s) with height, width/diameter, and spacing measurement lines
+  - **Cap:** Trapezoidal beam above column with slope indicators and H/B measurements
+- **Educational Design:** Visual learning tool showing parameter relationships and component positioning
 
 ### Dynamic Material Dropdowns
 Each component tab now includes material selection dropdowns populated with:
@@ -114,6 +152,13 @@ Each component tab now includes material selection dropdowns populated with:
 - **Piles:** Concrete materials (default C50/60) + Class selection (default "8")
 - **Elevation:** Concrete materials for both lamelar and circular (default C50/60) + Class selection (default "8")
 - **Cap:** Concrete materials (default C12/15) + Class selection (default "8")
+
+### Simple Input System
+- **Fully Accessible Textboxes:** All dimension fields are now clickable and editable
+- **No Input Restrictions:** Users can type any values freely
+- **Default Values Provided:** Sensible defaults pre-filled in all fields
+- **No Validation Blocks:** Removed all input validation that was preventing typing
+- **Easy Data Entry:** Simple, straightforward text input for all parameters
 
 ### Class Selection
 All component tabs include class dropdowns with values 1-10:
