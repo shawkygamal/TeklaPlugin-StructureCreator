@@ -1,6 +1,6 @@
-﻿namespace TeklaPlugin
+﻿namespace TeklaPlugin.Forms.Main
 {
-    partial class Form1
+    partial class StructureCreatorForm
     {
         /// <summary>
         /// Required designer variable.

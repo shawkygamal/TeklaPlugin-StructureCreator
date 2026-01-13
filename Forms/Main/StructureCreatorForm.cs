@@ -12,10 +12,17 @@ using Tekla.Structures.Geometry3d;
 using Tekla.Structures;
 using DrawingPoint = System.Drawing.Point;
 using TeklaPoint = Tekla.Structures.Geometry3d.Point;
+using TeklaPlugin.Services.Core;
+using TeklaPlugin.Services.Core.Models;
+using TeklaPlugin.Services.Foundation.Models;
+using TeklaPlugin.Services.Mat.Models;
+using TeklaPlugin.Services.Piles.Models;
+using TeklaPlugin.Services.Elevation.Models;
+using TeklaPlugin.Services.Cap.Models;
 
-namespace TeklaPlugin
+namespace TeklaPlugin.Forms.Main
 {
-    public partial class Form1: Form
+    public partial class StructureCreatorForm: Form
     {
         private TabControl tabControl;
         private Button createStructureButton;
@@ -43,7 +50,7 @@ namespace TeklaPlugin
         // Cap Parameters
         private TextBox capHTextBox, capBTextBox, capWTextBox, capPTextBox, capSlopeHeightTextBox;
 
-        public Form1()
+        public StructureCreatorForm()
         {
             InitializeComponent();
             InitializeCustomComponents();
@@ -55,7 +62,7 @@ namespace TeklaPlugin
             this.Size = new Size(800, 700);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.KeyPreview = true;
-            this.KeyDown += Form1_KeyDown;
+            this.KeyDown += StructureCreatorForm_KeyDown;
 
             tabControl = new TabControl();
             tabControl.Size = new Size(750, 550);
@@ -291,7 +298,7 @@ namespace TeklaPlugin
             CreateStructure();
         }
 
-        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        private void StructureCreatorForm_KeyDown(object sender, KeyEventArgs e)
         {
             // Create structure when 'S' key is pressed
             if (e.KeyCode == Keys.S)
@@ -315,8 +322,8 @@ namespace TeklaPlugin
                     return;
                 }
 
-                // Create StructureService
-                var structureService = new StructureService(model);
+                // Create StructureCreatorService
+                var structureCreatorService = new StructureCreatorService(model);
 
                 // Collect parameters
                 var globalParams = new GlobalParameters
@@ -328,20 +335,20 @@ namespace TeklaPlugin
                     SkewAngle = double.Parse(skewTextBox.Text)
                 };
 
-                var foundationParams = new FoundationParameters
+                var foundationParams = new TeklaPlugin.Services.Foundation.Models.FoundationParameters
                 {
                     Width = double.Parse(foundationWidthTextBox.Text),
                     Length = double.Parse(foundationLengthTextBox.Text),
                     Height = double.Parse(foundationHeightTextBox.Text)
                 };
 
-                var matParams = new MatParameters
+                var matParams = new TeklaPlugin.Services.Mat.Models.MatParameters
                 {
                     Cantilever = double.Parse(matCantileverTextBox.Text),
                     Thickness = double.Parse(matThicknessTextBox.Text)
                 };
 
-                var pileParams = new PileParameters
+                var pileParams = new TeklaPlugin.Services.Piles.Models.PileParameters
                 {
                     Rows = int.Parse(pileRowsTextBox.Text),
                     Columns = int.Parse(pileColumnsTextBox.Text),
@@ -352,7 +359,27 @@ namespace TeklaPlugin
                     EmbeddedLength = double.Parse(pileEmbeddedLengthTextBox.Text)
                 };
 
-                var capParams = new CapParameters
+                // Determine elevation type and collect parameters
+                ElevationType elevationType = lamelarRadioButton.Checked ? ElevationType.Lamelar : ElevationType.Circular;
+
+                var lamelarParams = new TeklaPlugin.Services.Elevation.Models.LamelarElevationParameters
+                {
+                    Width = double.Parse(lamelarWidthTextBox.Text),
+                    Thickness = double.Parse(lamelarThicknessTextBox.Text),
+                    Height = double.Parse(lamelarHeightTextBox.Text)
+                };
+
+                var circularParams = new TeklaPlugin.Services.Elevation.Models.CircularElevationParameters
+                {
+                    Diameter = double.Parse(circularDiameterTextBox.Text),
+                    Height = double.Parse(circularHeightTextBox.Text),
+                    NumberOfColumns = int.Parse(circularColumnsTextBox.Text),
+                    DistanceBetweenColumns = double.Parse(circularDistanceTextBox.Text),
+                    OffsetX = double.Parse(circularOffsetXTextBox.Text),
+                    OffsetY = double.Parse(circularOffsetYTextBox.Text)
+                };
+
+                var capParams = new TeklaPlugin.Services.Cap.Models.CapParameters
                 {
                     H = double.Parse(capHTextBox.Text),
                     B = double.Parse(capBTextBox.Text),
@@ -361,47 +388,17 @@ namespace TeklaPlugin
                     SlopeHeight = double.Parse(capSlopeHeightTextBox.Text)
                 };
 
-                // Create foundation
-                structureService.CreateFoundation(globalParams, foundationParams);
+                // Create the complete structure using the unified service
+                structureCreatorService.CreateStructure(
+                    globalParams,
+                    foundationParams,
+                    matParams,
+                    pileParams,
+                    elevationType,
+                    lamelarParams,
+                    circularParams,
+                    capParams);
 
-                // Create mat
-                structureService.CreateMat(globalParams, foundationParams, matParams);
-
-                // Create piles
-                structureService.CreatePiles(globalParams, foundationParams, pileParams);
-
-                // Create elevation
-                if (lamelarRadioButton.Checked)
-                {
-                    var lamelarParams = new LamelarElevationParameters
-                    {
-                        Width = double.Parse(lamelarWidthTextBox.Text),
-                        Thickness = double.Parse(lamelarThicknessTextBox.Text),
-                        Height = double.Parse(lamelarHeightTextBox.Text)
-                    };
-                    structureService.CreateElevationLamelar(globalParams, lamelarParams);
-                }
-                else
-                {
-                    var circularParams = new CircularElevationParameters
-                    {
-                        Diameter = double.Parse(circularDiameterTextBox.Text),
-                        Height = double.Parse(circularHeightTextBox.Text),
-                        NumberOfColumns = int.Parse(circularColumnsTextBox.Text),
-                        DistanceBetweenColumns = double.Parse(circularDistanceTextBox.Text),
-                        OffsetX = double.Parse(circularOffsetXTextBox.Text),
-                        OffsetY = double.Parse(circularOffsetYTextBox.Text)
-                    };
-                    structureService.CreateElevationCircular(globalParams, circularParams);
-                }
-
-                // Create cap
-                double elevationHeight = lamelarRadioButton.Checked ?
-                    double.Parse(lamelarHeightTextBox.Text) :
-                    double.Parse(circularHeightTextBox.Text);
-                structureService.CreateCap(globalParams, capParams, elevationHeight);
-
-                model.CommitChanges();
                 MessageBox.Show("Structure created successfully!", "Success",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }

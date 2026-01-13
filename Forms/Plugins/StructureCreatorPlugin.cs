@@ -5,13 +5,12 @@ using Tekla.Structures.Plugins;
 using Tekla.Structures.Dialog;
 using Tekla.Structures.Model;
 using Tekla.Structures.Geometry3d;
-using TeklaPlugin.Services;
-using TeklaPlugin.Models;
+using TeklaPlugin.Forms.Main;
 
-namespace TeklaPlugin.Forms
+namespace TeklaPlugin.Forms.Plugins
 {
     [Plugin("StructureCreator")]
-    [PluginUserInterface("TeklaPlugin.Forms.StructureCreatorForm")]
+    [PluginUserInterface("TeklaPlugin.Forms.Main.StructureCreatorForm")]
     public class StructureCreatorPlugin : PluginBase
     {
         public StructureCreatorPlugin()
