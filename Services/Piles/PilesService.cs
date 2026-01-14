@@ -43,7 +43,7 @@ namespace TeklaPlugin.Services.Piles
                     var pozX_rotated = pozX_rotated_o + global.PositionX;
                     var pozY_rotated = pozY_rotated_o + global.PositionY;
 
-                    Beam pile = new Beam();
+                    Beam pile = new Beam(Beam.BeamTypeEnum.COLUMN);
                     pile.StartPoint = new Point(pozX_rotated, pozY_rotated, pozZ_upper);
                     pile.EndPoint = new Point(pozX_rotated, pozY_rotated, pozZ_lower);
                     pile.Profile = new Profile { ProfileString = $"D{piles.Diameter}" };

@@ -30,7 +30,7 @@ namespace TeklaPlugin.Services.Elevation
                 var pozX_rotated = pozX_rotated_o + global.PositionX;
                 var pozY_rotated = pozY_rotated_o + global.PositionY;
 
-                Beam elevationLamelar = new Beam();
+                Beam elevationLamelar = new Beam(Beam.BeamTypeEnum.COLUMN);
                 elevationLamelar.StartPoint = new Point(pozX_rotated, pozY_rotated, global.PositionZ);
                 elevationLamelar.EndPoint = new Point(pozX_rotated, pozY_rotated, global.PositionZ + lamelar.Height);
                 elevationLamelar.Profile = new Profile { ProfileString = $"{lamelar.Width}*{lamelar.Thickness}" };
@@ -60,7 +60,7 @@ namespace TeklaPlugin.Services.Elevation
                 var pozX_rotated = pozX_rotated_o + global.PositionX;
                 var pozY_rotated = pozY_rotated_o + global.PositionY;
 
-                Beam elevationCircular = new Beam();
+                Beam elevationCircular = new Beam(Beam.BeamTypeEnum.COLUMN);
                 elevationCircular.StartPoint = new Point(pozX_rotated, pozY_rotated, global.PositionZ);
                 elevationCircular.EndPoint = new Point(pozX_rotated, pozY_rotated, global.PositionZ + circular.Height);
                 elevationCircular.Profile = new Profile { ProfileString = $"D{circular.Diameter}" };
