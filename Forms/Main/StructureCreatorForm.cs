@@ -44,7 +44,7 @@ namespace TeklaPlugin.Forms.Main
 
         // Elevation Parameters
         private RadioButton lamelarRadioButton, circularRadioButton;
-        private TextBox lamelarWidthTextBox, lamelarThicknessTextBox, lamelarHeightTextBox;
+        private TextBox lamelarWidthTextBox, lamelarThicknessTextBox, lamelarHeightTextBox, lamelarNumberOfColumnsTextBox, lamelarDistanceTextBox, lamelarOffsetXTextBox, lamelarOffsetYTextBox;
         private TextBox circularDiameterTextBox, circularHeightTextBox, circularColumnsTextBox,
                        circularDistanceTextBox, circularOffsetXTextBox, circularOffsetYTextBox;
 
@@ -68,6 +68,12 @@ namespace TeklaPlugin.Forms.Main
         private Label titleLabel;
         private Label subtitleLabel;
         private Label copyrightLabel;
+
+        private void StructureCreatorForm_Load(object sender, EventArgs e)
+        {
+
+        }
+
         private Panel headerPanel;
 
         public StructureCreatorForm()
@@ -190,6 +196,12 @@ namespace TeklaPlugin.Forms.Main
             AddLabelAndTextBox(tab, "Thickness (mm):", ref lamelarThicknessTextBox, "300", 310, yPos);
             yPos += 35;
             AddLabelAndTextBox(tab, "Height (mm):", ref lamelarHeightTextBox, "8000", 20, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Number of Columns:", ref lamelarNumberOfColumnsTextBox, "1", 20, yPos);
+            AddLabelAndTextBox(tab, "Distance Between (mm):", ref lamelarDistanceTextBox, "1000", 310, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Offset X (mm):", ref lamelarOffsetXTextBox, "0", 20, yPos);
+            AddLabelAndTextBox(tab, "Offset Y (mm):", ref lamelarOffsetYTextBox, "0", 310, yPos);
             yPos += 35;
             AddLabelAndComboBox(tab, "Material:", ref lamelarMaterialComboBox, 20, yPos);
             AddLabelAndComboBox(tab, "Class:", ref lamelarClassComboBox, 200, yPos);
@@ -1035,6 +1047,10 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(lamelarWidthTextBox, "400");
             SetupTextBox(lamelarThicknessTextBox, "300");
             SetupTextBox(lamelarHeightTextBox, "8000");
+            SetupTextBox(lamelarNumberOfColumnsTextBox, "1");
+            SetupTextBox(lamelarDistanceTextBox, "1000");
+            SetupTextBox(lamelarOffsetXTextBox, "0");
+            SetupTextBox(lamelarOffsetYTextBox, "0");
 
             SetupTextBox(circularDiameterTextBox, "600");
             SetupTextBox(circularHeightTextBox, "8000");
@@ -1274,6 +1290,10 @@ namespace TeklaPlugin.Forms.Main
                     Width = double.Parse(lamelarWidthTextBox.Text),
                     Thickness = double.Parse(lamelarThicknessTextBox.Text),
                     Height = double.Parse(lamelarHeightTextBox.Text),
+                    NumberOfColumns = int.Parse(lamelarNumberOfColumnsTextBox.Text),
+                    DistanceBetweenColumns = double.Parse(lamelarDistanceTextBox.Text),
+                    OffsetX = double.Parse(lamelarOffsetXTextBox.Text),
+                    OffsetY = double.Parse(lamelarOffsetYTextBox.Text),
                     Material = lamelarMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
                     Class = lamelarClassComboBox.SelectedItem?.ToString() ?? "8"
                 };

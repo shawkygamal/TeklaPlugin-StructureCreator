@@ -18,18 +18,32 @@ namespace TeklaPlugin.Services.Elevation
 
         public void CreateElevationLamelar(TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.LamelarElevationParameters lamelar)
         {
-            Beam elevationLamelar = new Beam();
-            elevationLamelar.StartPoint = new Point(global.PositionX, global.PositionY, global.PositionZ);
-            elevationLamelar.EndPoint = new Point(global.PositionX, global.PositionY, global.PositionZ + lamelar.Height);
-            elevationLamelar.Profile = new Profile { ProfileString = $"{lamelar.Width}*{lamelar.Thickness}" };
-            elevationLamelar.Material = new Material { MaterialString = lamelar.Material };
-            elevationLamelar.Class = lamelar.Class;
-            elevationLamelar.Position.Rotation = Position.RotationEnum.FRONT;
-            elevationLamelar.Position.RotationOffset = global.RotationAngle;
-            elevationLamelar.Position.Plane = Position.PlaneEnum.MIDDLE;
-            elevationLamelar.Position.Depth = Position.DepthEnum.MIDDLE;
+            double rotationAngleRadians = global.RotationAngle * Math.PI / 180;
 
-            elevationLamelar.Insert();
+            for (int i = 0; i < lamelar.NumberOfColumns; i++)
+            {
+                // Rotated by the origin coordinates (swapped X/Y logic for opposite direction)
+                var pozX_rotated_o = Math.Cos(rotationAngleRadians) * (lamelar.OffsetX + lamelar.DistanceBetweenColumns * i - ((lamelar.NumberOfColumns - 1) * lamelar.DistanceBetweenColumns) / 2) - Math.Sin(rotationAngleRadians) * lamelar.OffsetY;
+                var pozY_rotated_o = Math.Sin(rotationAngleRadians) * (lamelar.OffsetX + lamelar.DistanceBetweenColumns * i - ((lamelar.NumberOfColumns - 1) * lamelar.DistanceBetweenColumns) / 2) + Math.Cos(rotationAngleRadians) * lamelar.OffsetY;
+
+                // Rotated coordinates
+                var pozX_rotated = pozX_rotated_o + global.PositionX;
+                var pozY_rotated = pozY_rotated_o + global.PositionY;
+
+                Beam elevationLamelar = new Beam();
+                elevationLamelar.StartPoint = new Point(pozX_rotated, pozY_rotated, global.PositionZ);
+                elevationLamelar.EndPoint = new Point(pozX_rotated, pozY_rotated, global.PositionZ + lamelar.Height);
+                elevationLamelar.Profile = new Profile { ProfileString = $"{lamelar.Width}*{lamelar.Thickness}" };
+                elevationLamelar.Material = new Material { MaterialString = lamelar.Material };
+                elevationLamelar.Class = lamelar.Class;
+                elevationLamelar.Position.Rotation = Position.RotationEnum.FRONT;
+                elevationLamelar.Position.RotationOffset = global.RotationAngle;
+                elevationLamelar.Position.Plane = Position.PlaneEnum.MIDDLE;
+                elevationLamelar.Position.Depth = Position.DepthEnum.MIDDLE;
+                elevationLamelar.Name = $"Elevation_Lamelar_{i}";
+
+                elevationLamelar.Insert();
+            }
         }
 
         public void CreateElevationCircular(TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.CircularElevationParameters circular)
@@ -38,9 +52,9 @@ namespace TeklaPlugin.Services.Elevation
 
             for (int i = 0; i < circular.NumberOfColumns; i++)
             {
-                // Rotated by the origin coordinates
-                var pozX_rotated_o = Math.Cos(rotationAngleRadians) * circular.OffsetX - Math.Sin(rotationAngleRadians) * (circular.OffsetY + circular.DistanceBetweenColumns * i - ((circular.NumberOfColumns - 1) * circular.DistanceBetweenColumns) / 2);
-                var pozY_rotated_o = Math.Sin(rotationAngleRadians) * circular.OffsetX + Math.Cos(rotationAngleRadians) * (circular.OffsetY + circular.DistanceBetweenColumns * i - ((circular.NumberOfColumns - 1) * circular.DistanceBetweenColumns) / 2);
+                // Rotated by the origin coordinates (swapped X/Y logic)
+                var pozX_rotated_o = Math.Cos(rotationAngleRadians) * (circular.OffsetX + circular.DistanceBetweenColumns * i - ((circular.NumberOfColumns - 1) * circular.DistanceBetweenColumns) / 2) - Math.Sin(rotationAngleRadians) * circular.OffsetY;
+                var pozY_rotated_o = Math.Sin(rotationAngleRadians) * (circular.OffsetX + circular.DistanceBetweenColumns * i - ((circular.NumberOfColumns - 1) * circular.DistanceBetweenColumns) / 2) + Math.Cos(rotationAngleRadians) * circular.OffsetY;
 
                 // Rotated coordinates
                 var pozX_rotated = pozX_rotated_o + global.PositionX;
