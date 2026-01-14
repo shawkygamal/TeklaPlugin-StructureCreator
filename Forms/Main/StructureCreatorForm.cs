@@ -27,6 +27,7 @@ namespace TeklaPlugin.Forms.Main
     {
         private TabControl tabControl;
         private Button createStructureButton;
+        private Panel mainPanel;
 
         // Global Parameters
         private TextBox posXTextBox, posYTextBox, posZTextBox, rotationTextBox, skewTextBox;
@@ -110,15 +111,28 @@ namespace TeklaPlugin.Forms.Main
         private void InitializeCustomComponents()
         {
             this.Text = "Tekla Structure Creator";
-            this.Size = new Size(800, 700);
+            this.Size = new Size(900, 750);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.KeyPreview = true;
             this.KeyDown += StructureCreatorForm_KeyDown;
+            this.MinimumSize = new Size(900, 750);
+            this.MaximizeBox = false;
+
+            // Main container panel for better spacing
+            mainPanel = new Panel();
+            mainPanel.Size = new Size(860, 680);
+            mainPanel.Location = new DrawingPoint(15, 100);
+            mainPanel.BackColor = Color.Transparent;
+            this.Controls.Add(mainPanel);
 
             tabControl = new TabControl();
-            tabControl.Size = new Size(750, 550);
-            tabControl.Location = new DrawingPoint(20, 20);
-            this.Controls.Add(tabControl);
+            tabControl.Size = new Size(840, 580);
+            tabControl.Location = new DrawingPoint(10, 10);
+            tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            tabControl.Padding = new System.Drawing.Point(10, 5);
+            tabControl.DrawMode = TabDrawMode.OwnerDrawFixed;
+            tabControl.DrawItem += TabControl_DrawItem;
+            mainPanel.Controls.Add(tabControl);
 
             // Create tabs
             CreateGlobalTab();
@@ -128,41 +142,41 @@ namespace TeklaPlugin.Forms.Main
             CreateElevationTab();
             CreateCapTab();
 
-            // Create button
+            // Create button with better positioning
             createStructureButton = new Button();
-            createStructureButton.Text = "Create Structure";
-            createStructureButton.Size = new Size(200, 50);
-            createStructureButton.Location = new DrawingPoint(300, 580);
-            createStructureButton.Font = new Font("Arial", 12, FontStyle.Bold);
+            createStructureButton.Text = "🚀 Create Structure";
+            createStructureButton.Size = new Size(220, 50);
+            createStructureButton.Location = new DrawingPoint(320, 600);
+            createStructureButton.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             createStructureButton.Click += CreateStructureButton_Click;
-            this.Controls.Add(createStructureButton);
+            createStructureButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            mainPanel.Controls.Add(createStructureButton);
         }
 
         private void CreateGlobalTab()
         {
-            TabPage tab = new TabPage("Global");
+            TabPage tab = new TabPage("🌍 Global");
             tabControl.TabPages.Add(tab);
 
-            int yPos = 20;
+            int yPos = 25;
 
-            // Position X
-            AddLabelAndTextBox(tab, "Position X:", ref posXTextBox, "0", 20, yPos);
-            yPos += 30;
+            // Position section with better spacing
+            AddSectionHeader(tab, "📍 Position Parameters", 20, yPos);
+            yPos += 35;
 
-            // Position Y
-            AddLabelAndTextBox(tab, "Position Y:", ref posYTextBox, "0", 20, yPos);
-            yPos += 30;
+            AddLabelAndTextBox(tab, "Position X (mm):", ref posXTextBox, "0", 30, yPos);
+            AddLabelAndTextBox(tab, "Position Y (mm):", ref posYTextBox, "0", 350, yPos);
+            yPos += 40;
 
-            // Position Z
-            AddLabelAndTextBox(tab, "Position Z:", ref posZTextBox, "0", 20, yPos);
-            yPos += 30;
+            AddLabelAndTextBox(tab, "Position Z (mm):", ref posZTextBox, "0", 30, yPos);
+            yPos += 50;
 
-            // Rotation Angle
-            AddLabelAndTextBox(tab, "Rotation Angle:", ref rotationTextBox, "0", 20, yPos);
-            yPos += 30;
+            // Rotation section
+            AddSectionHeader(tab, "🔄 Orientation Parameters", 20, yPos);
+            yPos += 35;
 
-            // Skew Angle
-            AddLabelAndTextBox(tab, "Skew Angle:", ref skewTextBox, "0", 20, yPos);
+            AddLabelAndTextBox(tab, "Rotation Angle (°):", ref rotationTextBox, "0", 30, yPos);
+            AddLabelAndTextBox(tab, "Skew Angle (°):", ref skewTextBox, "0", 350, yPos);
         }
 
 
@@ -170,61 +184,95 @@ namespace TeklaPlugin.Forms.Main
 
         private void CreateElevationTab()
         {
-            TabPage tab = new TabPage("Elevation");
+            TabPage tab = new TabPage("🏛️ Elevation");
             tabControl.TabPages.Add(tab);
 
-            int yPos = 20;
+            int yPos = 25;
 
-            // Type selection
+            // Type selection section with better spacing
+            AddSectionHeader(tab, "🔧 Column Type Selection", 20, yPos);
+            yPos += 45;
+
+            // Radio buttons with enhanced spacing and styling
             lamelarRadioButton = new RadioButton();
-            lamelarRadioButton.Text = "Lamelar";
-            lamelarRadioButton.Location = new System.Drawing.Point(20, yPos);
+            lamelarRadioButton.Text = "🏗️ Lamelar Columns";
+            lamelarRadioButton.Location = new System.Drawing.Point(35, yPos);
             lamelarRadioButton.Checked = true;
+            lamelarRadioButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+            lamelarRadioButton.ForeColor = Color.FromArgb(63, 81, 181);
+            lamelarRadioButton.Padding = new Padding(5, 0, 0, 0);
             lamelarRadioButton.CheckedChanged += ElevationType_Changed;
             tab.Controls.Add(lamelarRadioButton);
 
             circularRadioButton = new RadioButton();
-            circularRadioButton.Text = "Circular";
-            circularRadioButton.Location = new System.Drawing.Point(120, yPos);
+            circularRadioButton.Text = "🔘 Circular Columns";
+            circularRadioButton.Location = new System.Drawing.Point(250, yPos);
+            circularRadioButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+            circularRadioButton.ForeColor = Color.FromArgb(63, 81, 181);
+            circularRadioButton.Padding = new Padding(5, 0, 0, 0);
             circularRadioButton.CheckedChanged += ElevationType_Changed;
             tab.Controls.Add(circularRadioButton);
 
-            yPos += 35;
+            yPos += 60;
 
-            // Lamelar properties (visible by default)
-            AddLabelAndTextBox(tab, "Width (mm):", ref lamelarWidthTextBox, "400", 20, yPos);
-            AddLabelAndTextBox(tab, "Thickness (mm):", ref lamelarThicknessTextBox, "300", 310, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Height (mm):", ref lamelarHeightTextBox, "8000", 20, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Number of Columns:", ref lamelarNumberOfColumnsTextBox, "1", 20, yPos);
-            AddLabelAndTextBox(tab, "Distance Between (mm):", ref lamelarDistanceTextBox, "1000", 310, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Offset X (mm):", ref lamelarOffsetXTextBox, "0", 20, yPos);
-            AddLabelAndTextBox(tab, "Offset Y (mm):", ref lamelarOffsetYTextBox, "0", 310, yPos);
-            yPos += 35;
-            AddLabelAndComboBox(tab, "Material:", ref lamelarMaterialComboBox, 20, yPos);
-            AddLabelAndComboBox(tab, "Class:", ref lamelarClassComboBox, 200, yPos);
-
-            // Circular properties (hidden by default)
+            // Lamelar properties section with better spacing
+            AddSectionHeader(tab, "📏 Lamelar Column Properties", 20, yPos);
             yPos += 40;
-            AddLabelAndTextBox(tab, "Diameter (mm):", ref circularDiameterTextBox, "600", 20, yPos);
-            AddLabelAndTextBox(tab, "Height (mm):", ref circularHeightTextBox, "8000", 310, yPos);
+
+            AddLabelAndTextBox(tab, "Width (mm):", ref lamelarWidthTextBox, "400", 35, yPos);
+            AddLabelAndTextBox(tab, "Thickness (mm):", ref lamelarThicknessTextBox, "300", 360, yPos);
+            yPos += 45;
+
+            AddLabelAndTextBox(tab, "Height (mm):", ref lamelarHeightTextBox, "8000", 35, yPos);
+            yPos += 55;
+
+            // Layout section with better organization
+            AddSectionHeader(tab, "📐 Layout Configuration", 20, yPos);
+            yPos += 40;
+
+            AddLabelAndTextBox(tab, "Number of Columns:", ref lamelarNumberOfColumnsTextBox, "1", 35, yPos);
+            AddLabelAndTextBox(tab, "Distance Between (mm):", ref lamelarDistanceTextBox, "1000", 360, yPos);
+            yPos += 45;
+
+            AddLabelAndTextBox(tab, "Offset X (mm):", ref lamelarOffsetXTextBox, "0", 35, yPos);
+            AddLabelAndTextBox(tab, "Offset Y (mm):", ref lamelarOffsetYTextBox, "0", 360, yPos);
+            yPos += 55;
+
+            // Material section with better spacing
+            AddSectionHeader(tab, "⚙️ Material & Classification", 20, yPos);
+            yPos += 40;
+
+            AddLabelAndComboBox(tab, "Material:", ref lamelarMaterialComboBox, 35, yPos);
+            AddLabelAndComboBox(tab, "Class:", ref lamelarClassComboBox, 360, yPos);
+
+            // Circular properties with consistent spacing (hidden by default)
+            yPos += 55;
+            AddSectionHeader(tab, "🔘 Circular Column Properties", 20, yPos);
+            yPos += 40;
+
+            AddLabelAndTextBox(tab, "Diameter (mm):", ref circularDiameterTextBox, "600", 35, yPos);
+            AddLabelAndTextBox(tab, "Height (mm):", ref circularHeightTextBox, "8000", 360, yPos);
             circularDiameterTextBox.Visible = false;
             circularHeightTextBox.Visible = false;
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Number of Columns:", ref circularColumnsTextBox, "4", 20, yPos);
-            AddLabelAndTextBox(tab, "Distance (mm):", ref circularDistanceTextBox, "1500", 310, yPos);
+            yPos += 45;
+
+            AddLabelAndTextBox(tab, "Number of Columns:", ref circularColumnsTextBox, "4", 35, yPos);
+            AddLabelAndTextBox(tab, "Distance (mm):", ref circularDistanceTextBox, "1500", 360, yPos);
             circularColumnsTextBox.Visible = false;
             circularDistanceTextBox.Visible = false;
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Offset X (mm):", ref circularOffsetXTextBox, "0", 20, yPos);
-            AddLabelAndTextBox(tab, "Offset Y (mm):", ref circularOffsetYTextBox, "0", 310, yPos);
+            yPos += 45;
+
+            AddLabelAndTextBox(tab, "Offset X (mm):", ref circularOffsetXTextBox, "0", 35, yPos);
+            AddLabelAndTextBox(tab, "Offset Y (mm):", ref circularOffsetYTextBox, "0", 360, yPos);
             circularOffsetXTextBox.Visible = false;
             circularOffsetYTextBox.Visible = false;
-            yPos += 35;
-            AddLabelAndComboBox(tab, "Circular Material:", ref circularMaterialComboBox, 20, yPos);
-            AddLabelAndComboBox(tab, "Circular Class:", ref circularClassComboBox, 200, yPos);
+            yPos += 55;
+
+            AddSectionHeader(tab, "⚙️ Circular Material & Classification", 20, yPos);
+            yPos += 40;
+
+            AddLabelAndComboBox(tab, "Material:", ref circularMaterialComboBox, 35, yPos);
+            AddLabelAndComboBox(tab, "Class:", ref circularClassComboBox, 360, yPos);
             circularMaterialComboBox.Visible = false;
             circularClassComboBox.Visible = false;
         }
@@ -305,40 +353,74 @@ namespace TeklaPlugin.Forms.Main
 
         private void ApplyModernStyling()
         {
+            // Modern color palette
+            Color primaryColor = Color.FromArgb(63, 81, 181);        // Modern blue
+            Color primaryDark = Color.FromArgb(48, 63, 159);         // Darker blue
+            Color primaryLight = Color.FromArgb(92, 107, 192);       // Lighter blue
+            Color accentColor = Color.FromArgb(255, 87, 34);         // Orange accent
+            Color backgroundColor = Color.FromArgb(250, 250, 250);   // Very light gray
+            Color surfaceColor = Color.White;                        // White surface
+            Color textPrimary = Color.FromArgb(33, 33, 33);          // Dark gray text
+            Color textSecondary = Color.FromArgb(117, 117, 117);     // Medium gray text
+
             // Form styling
-            this.BackColor = Color.FromArgb(245, 245, 245);
+            this.BackColor = backgroundColor;
             this.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            this.ForeColor = textPrimary;
 
-            // Tab control styling
+            // Tab control styling with modern look
             tabControl.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
-            tabControl.BackColor = Color.White;
+            tabControl.BackColor = surfaceColor;
+            tabControl.ForeColor = textPrimary;
 
-            // Header styling
+            // Header styling with gradient
             if (headerPanel != null)
             {
-                headerPanel.BackColor = Color.LightGray;
-                headerPanel.ForeColor = Color.Black;
+                headerPanel.BackColor = primaryColor;
+                headerPanel.ForeColor = Color.White;
             }
 
             if (titleLabel != null)
             {
-                titleLabel.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
-                titleLabel.ForeColor = Color.Black;
-            }
-            
-            if (subtitleLabel != null)
-            {
-                subtitleLabel.ForeColor = Color.FromArgb(80, 80, 80);
+                titleLabel.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+                titleLabel.ForeColor = Color.White;
             }
 
-            // Button styling
+            if (subtitleLabel != null)
+            {
+                subtitleLabel.ForeColor = Color.FromArgb(200, 200, 200);
+                subtitleLabel.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+            }
+
+            // Button styling with modern flat design and hover effects
             if (createStructureButton != null)
             {
-                createStructureButton.BackColor = Color.FromArgb(0, 120, 212);
+                createStructureButton.BackColor = primaryColor;
                 createStructureButton.ForeColor = Color.White;
                 createStructureButton.FlatStyle = FlatStyle.Flat;
-                createStructureButton.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-                createStructureButton.FlatAppearance.BorderColor = Color.FromArgb(0, 120, 212);
+                createStructureButton.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+                createStructureButton.FlatAppearance.BorderColor = primaryColor;
+                createStructureButton.FlatAppearance.BorderSize = 0;
+                createStructureButton.Height = 45;
+                createStructureButton.Cursor = Cursors.Hand;
+
+                // Add hover effect
+                createStructureButton.MouseEnter += (s, e) => {
+                    createStructureButton.BackColor = primaryDark;
+                    createStructureButton.FlatAppearance.BorderColor = primaryDark;
+                };
+                createStructureButton.MouseLeave += (s, e) => {
+                    createStructureButton.BackColor = primaryColor;
+                    createStructureButton.FlatAppearance.BorderColor = primaryColor;
+                };
+            }
+
+            // Enhance tab appearance
+            foreach (TabPage tab in tabControl.TabPages)
+            {
+                tab.BackColor = surfaceColor;
+                tab.ForeColor = textPrimary;
+                tab.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
             }
 
         }
@@ -1078,22 +1160,28 @@ namespace TeklaPlugin.Forms.Main
 
         private void CreateFoundationTab()
         {
-            TabPage tab = new TabPage("Foundation");
+            TabPage tab = new TabPage("🏗️ Foundation");
             tabControl.TabPages.Add(tab);
 
-            int yPos = 20;
+            int yPos = 25;
 
-            // Foundation Dimensions
-            AddLabelAndTextBox(tab, "Width (mm):", ref foundationWidthTextBox, "2000", 20, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Length (mm):", ref foundationLengthTextBox, "4000", 20, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Height (mm):", ref foundationHeightTextBox, "600", 20, yPos);
+            // Dimensions section
+            AddSectionHeader(tab, "📐 Dimensions", 20, yPos);
             yPos += 35;
 
-            // Material & Class
-            AddLabelAndComboBox(tab, "Material:", ref foundationMaterialComboBox, 20, yPos);
-            AddLabelAndComboBox(tab, "Class:", ref foundationClassComboBox, 200, yPos);
+            AddLabelAndTextBox(tab, "Width (mm):", ref foundationWidthTextBox, "2000", 30, yPos);
+            AddLabelAndTextBox(tab, "Length (mm):", ref foundationLengthTextBox, "4000", 350, yPos);
+            yPos += 40;
+
+            AddLabelAndTextBox(tab, "Height (mm):", ref foundationHeightTextBox, "600", 30, yPos);
+            yPos += 50;
+
+            // Properties section
+            AddSectionHeader(tab, "⚙️ Properties", 20, yPos);
+            yPos += 35;
+
+            AddLabelAndComboBox(tab, "Material:", ref foundationMaterialComboBox, 30, yPos);
+            AddLabelAndComboBox(tab, "Class:", ref foundationClassComboBox, 350, yPos);
         }
 
         private void CreateMatTab()
@@ -1115,29 +1203,40 @@ namespace TeklaPlugin.Forms.Main
 
         private void CreatePilesTab()
         {
-            TabPage tab = new TabPage("Piles");
+            TabPage tab = new TabPage("📏 Piles");
             tabControl.TabPages.Add(tab);
 
-            int yPos = 20;
+            int yPos = 25;
 
-            // Pile Layout
-            AddLabelAndTextBox(tab, "Rows:", ref pileRowsTextBox, "3", 20, yPos);
-            AddLabelAndTextBox(tab, "Columns:", ref pileColumnsTextBox, "3", 150, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Row Distance (mm):", ref pileRowDistanceTextBox, "2000", 20, yPos);
-            AddLabelAndTextBox(tab, "Column Distance (mm):", ref pileColumnDistanceTextBox, "2000", 310, yPos);
+            // Layout section
+            AddSectionHeader(tab, "📐 Layout Configuration", 20, yPos);
             yPos += 35;
 
-            // Pile Properties
-            AddLabelAndTextBox(tab, "Length (mm):", ref pileLengthTextBox, "12000", 20, yPos);
-            AddLabelAndTextBox(tab, "Diameter (mm):", ref pileDiameterTextBox, "600", 310, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Embedded Length (mm):", ref pileEmbeddedLengthTextBox, "2000", 20, yPos);
+            AddLabelAndTextBox(tab, "Rows:", ref pileRowsTextBox, "3", 30, yPos);
+            AddLabelAndTextBox(tab, "Columns:", ref pileColumnsTextBox, "3", 200, yPos);
+            AddLabelAndTextBox(tab, "Row Distance (mm):", ref pileRowDistanceTextBox, "2000", 350, yPos);
+            yPos += 40;
+
+            AddLabelAndTextBox(tab, "Column Distance (mm):", ref pileColumnDistanceTextBox, "2000", 30, yPos);
+            yPos += 50;
+
+            // Properties section
+            AddSectionHeader(tab, "🔧 Pile Properties", 20, yPos);
             yPos += 35;
 
-            // Material & Class
-            AddLabelAndComboBox(tab, "Material:", ref pilesMaterialComboBox, 20, yPos);
-            AddLabelAndComboBox(tab, "Class:", ref pilesClassComboBox, 200, yPos);
+            AddLabelAndTextBox(tab, "Length (mm):", ref pileLengthTextBox, "12000", 30, yPos);
+            AddLabelAndTextBox(tab, "Diameter (mm):", ref pileDiameterTextBox, "600", 350, yPos);
+            yPos += 40;
+
+            AddLabelAndTextBox(tab, "Embedded Length (mm):", ref pileEmbeddedLengthTextBox, "2000", 30, yPos);
+            yPos += 50;
+
+            // Material section
+            AddSectionHeader(tab, "⚙️ Material & Classification", 20, yPos);
+            yPos += 35;
+
+            AddLabelAndComboBox(tab, "Material:", ref pilesMaterialComboBox, 30, yPos);
+            AddLabelAndComboBox(tab, "Class:", ref pilesClassComboBox, 350, yPos);
         }
 
         private bool ValidateAllInputs()
@@ -1151,14 +1250,40 @@ namespace TeklaPlugin.Forms.Main
             Label label = new Label();
             label.Text = labelText;
             label.Location = new System.Drawing.Point(x, y);
-            label.Size = new Size(150, 20);
-            label.Font = new Font("Segoe UI", 9F);
+            label.Size = new Size(170, 25);
+            label.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            label.ForeColor = Color.FromArgb(66, 66, 66); // Dark gray text
+            label.TextAlign = ContentAlignment.MiddleLeft;
             parent.Controls.Add(label);
 
             textBox = new TextBox();
-            textBox.Location = new System.Drawing.Point(x + 160, y);
-            textBox.Size = new Size(120, 23);
+            textBox.Location = new System.Drawing.Point(x + 180, y);
+            textBox.Size = new Size(150, 27);
             textBox.Font = new Font("Segoe UI", 9F);
+            textBox.BorderStyle = BorderStyle.FixedSingle;
+            textBox.BackColor = Color.White;
+            textBox.ForeColor = Color.FromArgb(33, 33, 33);
+            textBox.Padding = new Padding(3);
+
+            // Add focus styling
+            textBox.Enter += (s, e) => {
+                var tb = s as TextBox;
+                if (tb != null)
+                {
+                    tb.BackColor = Color.FromArgb(252, 252, 252);
+                    tb.Parent.Invalidate();
+                }
+            };
+
+            textBox.Leave += (s, e) => {
+                var tb = s as TextBox;
+                if (tb != null)
+                {
+                    tb.BackColor = Color.White;
+                    tb.Parent.Invalidate();
+                }
+            };
+
             SetupTextBox(textBox, defaultValue);
             parent.Controls.Add(textBox);
         }
@@ -1168,16 +1293,143 @@ namespace TeklaPlugin.Forms.Main
             Label label = new Label();
             label.Text = labelText;
             label.Location = new System.Drawing.Point(x, y);
-            label.Size = new Size(150, 20);
-            label.Font = new Font("Segoe UI", 9F);
+            label.Size = new Size(160, 22);
+            label.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            label.ForeColor = Color.FromArgb(63, 81, 181); // Primary color
+            label.TextAlign = ContentAlignment.MiddleLeft;
             parent.Controls.Add(label);
 
             comboBox = new ComboBox();
             comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboBox.Location = new System.Drawing.Point(x + 160, y);
-            comboBox.Size = new Size(120, 23);
+            comboBox.Location = new System.Drawing.Point(x + 170, y);
+            comboBox.Size = new Size(150, 27);
             comboBox.Font = new Font("Segoe UI", 9F);
+            comboBox.BackColor = Color.White;
+            comboBox.ForeColor = Color.FromArgb(33, 33, 33);
+            comboBox.FlatStyle = FlatStyle.System; // Better arrow visibility
+            comboBox.DrawMode = DrawMode.OwnerDrawFixed;
+            comboBox.DrawItem += ComboBox_DrawItem;
+            comboBox.DropDownHeight = 150; // Taller dropdown
+
+            // Add border styling
+            comboBox.Paint += (s, e) => {
+                var cb = s as ComboBox;
+                if (cb != null && !cb.Focused)
+                {
+                    using (var pen = new Pen(Color.FromArgb(200, 200, 200), 1))
+                    {
+                        e.Graphics.DrawRectangle(pen, 0, 0, cb.Width - 1, cb.Height - 1);
+                    }
+                }
+                else if (cb != null && cb.Focused)
+                {
+                    using (var pen = new Pen(Color.FromArgb(63, 81, 181), 2))
+                    {
+                        e.Graphics.DrawRectangle(pen, 1, 1, cb.Width - 3, cb.Height - 3);
+                    }
+                }
+            };
+
             parent.Controls.Add(comboBox);
+        }
+
+        private void AddSectionHeader(Control parent, string headerText, int x, int y)
+        {
+            Label headerLabel = new Label();
+            headerLabel.Text = headerText;
+            headerLabel.Location = new System.Drawing.Point(x, y);
+            headerLabel.Size = new Size(500, 30);
+            headerLabel.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            headerLabel.ForeColor = Color.FromArgb(63, 81, 181); // Primary color
+            headerLabel.BackColor = Color.FromArgb(250, 250, 250); // Very light background
+            headerLabel.Padding = new Padding(8, 5, 5, 5);
+            headerLabel.BorderStyle = BorderStyle.None;
+
+            // Add subtle border effect
+            headerLabel.Paint += (s, e) => {
+                var lbl = s as Label;
+                if (lbl != null)
+                {
+                    using (var pen = new Pen(Color.FromArgb(63, 81, 181), 1))
+                    {
+                        e.Graphics.DrawLine(pen, 0, lbl.Height - 1, lbl.Width, lbl.Height - 1);
+                    }
+                }
+            };
+
+            parent.Controls.Add(headerLabel);
+        }
+
+        private void TabControl_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            TabPage page = tabControl.TabPages[e.Index];
+            Graphics g = e.Graphics;
+            Brush textBrush;
+
+            // Get tab rectangle
+            Rectangle tabBounds = tabControl.GetTabRect(e.Index);
+
+            if (e.State == DrawItemState.Selected)
+            {
+                // Selected tab
+                g.FillRectangle(new SolidBrush(Color.FromArgb(63, 81, 181)), e.Bounds);
+                textBrush = Brushes.White;
+            }
+            else
+            {
+                // Unselected tab
+                g.FillRectangle(new SolidBrush(Color.FromArgb(240, 240, 240)), e.Bounds);
+                textBrush = new SolidBrush(Color.FromArgb(63, 81, 181));
+            }
+
+            // Draw tab text
+            StringFormat sf = new StringFormat();
+            sf.Alignment = StringAlignment.Center;
+            sf.LineAlignment = StringAlignment.Center;
+
+            g.DrawString(page.Text, new Font("Segoe UI", 9F, FontStyle.Regular), textBrush, tabBounds, sf);
+        }
+
+        private void ComboBox_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0) return;
+
+            ComboBox comboBox = sender as ComboBox;
+            if (comboBox == null) return;
+
+            // Get the item text
+            string text = comboBox.Items[e.Index].ToString();
+            Color textColor = Color.FromArgb(33, 33, 33);
+            Color backgroundColor = Color.White;
+
+            // Change colors for selected item
+            if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
+            {
+                backgroundColor = Color.FromArgb(63, 81, 181);
+                textColor = Color.White;
+            }
+            else if ((e.State & DrawItemState.Focus) == DrawItemState.Focus)
+            {
+                backgroundColor = Color.FromArgb(240, 240, 240);
+            }
+
+            // Fill background
+            using (SolidBrush backgroundBrush = new SolidBrush(backgroundColor))
+            {
+                e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+            }
+
+            // Draw text
+            using (SolidBrush textBrush = new SolidBrush(textColor))
+            {
+                e.Graphics.DrawString(text, comboBox.Font, textBrush, e.Bounds.X + 3, e.Bounds.Y + 2);
+            }
+
+            // Draw focus rectangle if needed
+            if ((e.State & DrawItemState.Focus) == DrawItemState.Focus)
+            {
+                e.DrawFocusRectangle();
+            }
         }
 
         private void ElevationType_Changed(object sender, EventArgs e)
