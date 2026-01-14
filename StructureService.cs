@@ -3,8 +3,8 @@ using Tekla.Structures.Model;
 using Tekla.Structures.Geometry3d;
 using Tekla.Structures.Solid;
 using Tekla.Structures.Model.UI;
-using Material = Tekla.Structures.Model.Material;
 using System.Collections.Generic;
+using Material = Tekla.Structures.Model.Material;
 
 namespace TeklaPlugin
 {

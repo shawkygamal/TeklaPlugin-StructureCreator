@@ -1,6 +1,8 @@
 using System;
+using Tekla.Structures;
 using Tekla.Structures.Model;
 using Tekla.Structures.Geometry3d;
+using Tekla.Structures.Datatype;
 using Material = Tekla.Structures.Model.Material;
 using TeklaPlugin.Services.Core.Models;
 using TeklaPlugin.Services.Cap.Models;
