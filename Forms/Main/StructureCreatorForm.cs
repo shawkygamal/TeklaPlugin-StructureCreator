@@ -1142,8 +1142,86 @@ namespace TeklaPlugin.Forms.Main
 
         private bool ValidateAllInputs()
         {
-            // For now, just allow any input - no validation
-            return true;
+            try
+            {
+                // Determine elevation type
+                ElevationType elevationType = lamelarRadioButton.Checked
+                    ? ElevationType.Lamelar
+                    : ElevationType.Circular;
+
+                // Build parameter objects from current UI values
+                var lamelarParams = new TeklaPlugin.Services.Elevation.Models.LamelarElevationParameters
+                {
+                    Width = ParseDouble(lamelarWidthTextBox.Text, 400),
+                    Thickness = ParseDouble(lamelarThicknessTextBox.Text, 300),
+                    Height = ParseDouble(lamelarHeightTextBox.Text, 8000),
+                    NumberOfColumns = (int)ParseDouble(lamelarNumberOfColumnsTextBox.Text, 1),
+                    DistanceBetweenColumns = ParseDouble(lamelarDistanceTextBox.Text, 1000),
+                    OffsetX = ParseDouble(lamelarOffsetXTextBox.Text, 0),
+                    OffsetY = ParseDouble(lamelarOffsetYTextBox.Text, 0)
+                };
+
+                var circularParams = new TeklaPlugin.Services.Elevation.Models.CircularElevationParameters
+                {
+                    Diameter = ParseDouble(circularDiameterTextBox.Text, 600),
+                    Height = ParseDouble(circularHeightTextBox.Text, 8000),
+                    NumberOfColumns = (int)ParseDouble(circularColumnsTextBox.Text, 4),
+                    DistanceBetweenColumns = ParseDouble(circularDistanceTextBox.Text, 1500),
+                    OffsetX = ParseDouble(circularOffsetXTextBox.Text, 0),
+                    OffsetY = ParseDouble(circularOffsetYTextBox.Text, 0)
+                };
+
+                var capParams = new TeklaPlugin.Services.Cap.Models.CapParameters
+                {
+                    TopLength = ParseDouble(capTopLengthTextBox.Text, 4000),
+                    BottomLength = ParseDouble(capBottomLengthTextBox.Text, 2000),
+                    Height = ParseDouble(capHeightTextBox.Text, 500),
+                    Width = ParseDouble(capWidthTextBox.Text, 600),
+                    P = ParseDouble(capPTextBox.Text, 0)
+                };
+
+                var pileParams = new TeklaPlugin.Services.Piles.Models.PileParameters
+                {
+                    Rows = (int)ParseDouble(pileRowsTextBox.Text, 3),
+                    Columns = (int)ParseDouble(pileColumnsTextBox.Text, 3),
+                    RowDistance = ParseDouble(pileRowDistanceTextBox.Text, 2000),
+                    ColumnDistance = ParseDouble(pileColumnDistanceTextBox.Text, 2000),
+                    Diameter = ParseDouble(pileDiameterTextBox.Text, 600),
+                    EmbeddedLength = ParseDouble(pileEmbeddedLengthTextBox.Text, 2000)
+                };
+
+                var foundationParams = new TeklaPlugin.Services.Foundation.Models.FoundationParameters
+                {
+                    Width = ParseDouble(foundationWidthTextBox.Text, 2000),
+                    Length = ParseDouble(foundationLengthTextBox.Text, 4000),
+                    Height = ParseDouble(foundationHeightTextBox.Text, 600)
+                };
+
+                // Run cross-object validations
+                var validator = new StructureValidator();
+                var result = validator.ValidateAll(
+                    elevationType, lamelarParams, circularParams,
+                    capParams, pileParams, foundationParams);
+
+                if (!result.IsValid)
+                {
+                    MessageBox.Show(
+                        "Geometry validation failed:\n\n" + result.GetSummary(),
+                        "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error during validation: {ex.Message}",
+                    "Validation Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
         }
 
         private void AddLabelAndTextBox(Control parent, string labelText, ref TextBox textBox, string defaultValue, int x, int y)

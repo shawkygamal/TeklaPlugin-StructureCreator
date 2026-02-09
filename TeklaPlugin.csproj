@@ -84,6 +84,7 @@
     <Compile Include="Forms\Main\StructureCreatorForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\Main\StructureValidator.cs" />
     <Compile Include="Forms\Main\StructureCreatorForm.Designer.cs">
       <DependentUpon>StructureCreatorForm.cs</DependentUpon>
     </Compile>
