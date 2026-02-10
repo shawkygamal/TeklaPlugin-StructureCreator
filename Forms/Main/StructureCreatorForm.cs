@@ -50,6 +50,8 @@ namespace TeklaPlugin.Forms.Main
 
         // Cap Parameters
         private TextBox capTopLengthTextBox, capBottomLengthTextBox, capWidthTextBox, capDepthTextBox, capHeightDiffTextBox, capPTextBox;
+        private TextBox capCutXTextBox, capCutYTextBox;
+        private ComboBox capCutSideComboBox;
 
         // Material Dropdowns
         private ComboBox foundationMaterialComboBox, matMaterialComboBox, pilesMaterialComboBox,
@@ -248,6 +250,29 @@ namespace TeklaPlugin.Forms.Main
             AddLabelAndTextBox(tab, "Height Diff (slope) - mm:", ref capHeightDiffTextBox, "300", 20, yPos);
             yPos += 35;
             AddLabelAndTextBox(tab, "P (Offset from Center) - mm:", ref capPTextBox, "0", 20, yPos);
+            yPos += 35;
+
+            // Cross-section L-cut (0 = no cut)
+            AddLabelAndTextBox(tab, "Cut X (width) - mm:", ref capCutXTextBox, "0", 20, yPos);
+            AddLabelAndTextBox(tab, "Cut Y (height) - mm:", ref capCutYTextBox, "0", 310, yPos);
+            yPos += 35;
+
+            // Cut side selector
+            Label cutSideLabel = new Label();
+            cutSideLabel.Text = "Cut Side:";
+            cutSideLabel.Location = new System.Drawing.Point(20, yPos);
+            cutSideLabel.Size = new Size(150, 20);
+            cutSideLabel.Font = new Font("Segoe UI", 9F);
+            tab.Controls.Add(cutSideLabel);
+
+            capCutSideComboBox = new ComboBox();
+            capCutSideComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            capCutSideComboBox.Items.AddRange(new object[] { "Right", "Left" });
+            capCutSideComboBox.SelectedItem = "Right";
+            capCutSideComboBox.Location = new System.Drawing.Point(180, yPos);
+            capCutSideComboBox.Size = new Size(120, 23);
+            capCutSideComboBox.Font = new Font("Segoe UI", 9F);
+            tab.Controls.Add(capCutSideComboBox);
             yPos += 35;
 
             // Material & Class
@@ -1080,6 +1105,8 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(capDepthTextBox, "500");
             SetupTextBox(capHeightDiffTextBox, "300");
             SetupTextBox(capPTextBox, "0");
+            SetupTextBox(capCutXTextBox, "0");
+            SetupTextBox(capCutYTextBox, "0");
         }
 
         private void SetupTextBox(TextBox textBox, string defaultValue = "")
@@ -1194,7 +1221,10 @@ namespace TeklaPlugin.Forms.Main
                     Width = ParseDouble(capWidthTextBox.Text, 600),
                     Depth = ParseDouble(capDepthTextBox.Text, 500),
                     HeightDiff = ParseDouble(capHeightDiffTextBox.Text, 300),
-                    P = ParseDouble(capPTextBox.Text, 0)
+                    P = ParseDouble(capPTextBox.Text, 0),
+                    CutX = ParseDouble(capCutXTextBox.Text, 0),
+                    CutY = ParseDouble(capCutYTextBox.Text, 0),
+                    CutSide = capCutSideComboBox.SelectedItem?.ToString() ?? "Right"
                 };
 
                 var pileParams = new TeklaPlugin.Services.Piles.Models.PileParameters
@@ -1413,6 +1443,9 @@ namespace TeklaPlugin.Forms.Main
                     Depth = double.Parse(capDepthTextBox.Text),
                     HeightDiff = double.Parse(capHeightDiffTextBox.Text),
                     P = double.Parse(capPTextBox.Text),
+                    CutX = double.Parse(capCutXTextBox.Text),
+                    CutY = double.Parse(capCutYTextBox.Text),
+                    CutSide = capCutSideComboBox.SelectedItem?.ToString() ?? "Right",
                     Material = capMaterialComboBox.SelectedItem?.ToString() ?? "C12/15",
                     Class = capClassComboBox.SelectedItem?.ToString() ?? "8"
                 };

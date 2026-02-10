@@ -56,6 +56,7 @@ namespace TeklaPlugin.Services.Cap
             if (capBeam.Insert())
             {
                 CreateCutPlaneCap(capBeam, global, cap, elevationCircularHeight, finalX, finalY);
+                CreateCrossSectionCut(capBeam, global, cap, finalX, finalY, finalZ_top, widthi_cap);
             }
         }
 
@@ -182,6 +183,48 @@ namespace TeklaPlugin.Services.Cap
             cut.Plane.AxisY = vecAC;
 
             cut.Insert();
+        }
+
+        private void CreateCrossSectionCut(Beam capBeam, TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.CapParameters capParams, double centerX, double centerY, double topZ, double widthi_cap)
+        {
+            if (capParams.CutX <= 0 || capParams.CutY <= 0) return;
+
+            double rotRad = global.RotationAngle * Math.PI / 180.0;
+
+            // Width direction in local coords = Y axis
+            // After rotation: global direction = (-sin(rotRad), cos(rotRad))
+            double widthOffset = (capParams.Width / 2.0) - (capParams.CutX / 2.0);
+            if (capParams.CutSide == "Left")
+                widthOffset = -widthOffset;
+
+            double dx = widthOffset * (-Math.Sin(rotRad));
+            double dy = widthOffset * Math.Cos(rotRad);
+
+            // Cutting beam: vertical, from slightly above top down by CutY
+            Beam cutBeam = new Beam();
+            cutBeam.StartPoint = new Point(centerX + dx, centerY + dy, topZ + 50);
+            cutBeam.EndPoint = new Point(centerX + dx, centerY + dy, topZ - capParams.CutY);
+            cutBeam.Profile = new Profile { ProfileString = $"{capParams.CutX}*{widthi_cap + 200}" };
+            cutBeam.Material = new Material { MaterialString = capParams.Material };
+            cutBeam.Class = BooleanPart.BooleanOperativeClassName;
+            cutBeam.Position.Rotation = Position.RotationEnum.FRONT;
+            cutBeam.Position.RotationOffset = -global.RotationAngle;
+            cutBeam.Position.Plane = Position.PlaneEnum.MIDDLE;
+            cutBeam.Position.Depth = Position.DepthEnum.MIDDLE;
+
+            if (cutBeam.Insert())
+            {
+                BooleanPart bp = new BooleanPart();
+                bp.Father = capBeam;
+                bp.SetOperativePart(cutBeam);
+                bp.Type = BooleanPart.BooleanTypeEnum.BOOLEAN_CUT;
+
+                if (!bp.Insert())
+                {
+                    // Boolean failed — remove leftover cutting beam
+                    cutBeam.Delete();
+                }
+            }
         }
 
         private Point RotateAndTranslate(Point center, double rotRad, double x, double y, double z)
