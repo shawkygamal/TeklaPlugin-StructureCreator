@@ -78,8 +78,9 @@ namespace TeklaPlugin.Forms.Main
 
         /// <summary>
         /// Validates that:
-        ///   a) No column extends outside the cap beam bottom length.
+        ///   a) Column cross-section does not exceed cap beam width.
         ///   b) Adjacent columns do not overlap (spacing &lt; column size).
+        ///   c) No column extends outside the cap beam bottom length.
         ///
         /// Geometry reference (local frame, before rotation):
         ///   Column i center X = OffsetX + Spacing * i − ((N−1) * Spacing) / 2
@@ -117,7 +118,31 @@ namespace TeklaPlugin.Forms.Main
                 sizeName = "diameter";
             }
 
-            // ── (a) Column overlap check ──────────────────────────────
+            // ── (a) Column cross-section vs cap width ─────────────────
+            if (elevationType == ElevationType.Lamelar)
+            {
+                // For lamelar, check both width and thickness against cap width
+                double maxDimension = Math.Max(lamelarParams.Width, lamelarParams.Thickness);
+                if (maxDimension > capParams.Width)
+                {
+                    result.AddError(
+                        $"Lamelar column cross-section ({lamelarParams.Width:F0} × {lamelarParams.Thickness:F0} mm) " +
+                        $"exceeds cap beam width ({capParams.Width:F0} mm). " +
+                        $"Reduce column width/thickness or increase cap beam width.");
+                }
+            }
+            else
+            {
+                // For circular, check diameter against cap width
+                if (circularParams.Diameter > capParams.Width)
+                {
+                    result.AddError(
+                        $"Circular column diameter ({circularParams.Diameter:F0} mm) exceeds cap beam width " +
+                        $"({capParams.Width:F0} mm). Reduce column diameter or increase cap beam width.");
+                }
+            }
+
+            // ── (b) Column overlap check ──────────────────────────────
             if (numColumns > 1 && spacing < columnSize)
             {
                 result.AddError(
@@ -125,7 +150,7 @@ namespace TeklaPlugin.Forms.Main
                     $"({columnSize:F0} mm). Minimum spacing must be ≥ {columnSize:F0} mm.");
             }
 
-            // ── (b) Columns inside cap beam bottom length ─────────────
+            // ── (c) Columns inside cap beam bottom length ─────────────
             double capLeft = capParams.P - capParams.BottomLength / 2.0;
             double capRight = capParams.P + capParams.BottomLength / 2.0;
 
