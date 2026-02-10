@@ -19,6 +19,7 @@ using TeklaPlugin.Services.Mat.Models;
 using TeklaPlugin.Services.Piles.Models;
 using TeklaPlugin.Services.Elevation.Models;
 using TeklaPlugin.Services.Cap.Models;
+using TeklaPlugin.Services.Buffer.Models;
 using TeklaPlugin.TeklaQueries;
 
 namespace TeklaPlugin.Forms.Main
@@ -52,6 +53,11 @@ namespace TeklaPlugin.Forms.Main
         private TextBox capTopLengthTextBox, capBottomLengthTextBox, capWidthTextBox, capDepthTextBox, capHeightDiffTextBox, capPTextBox;
         private TextBox capCutXTextBox, capCutYTextBox;
         private ComboBox capCutSideComboBox;
+
+        // Buffer Parameters
+        private TextBox bufferNumberTextBox, bufferSpacingTextBox, bufferLeftOffsetTextBox,
+                       bufferRightOffsetTextBox, bufferWidthTextBox, bufferBreadthTextBox, bufferHeightsTextBox;
+        private ComboBox bufferMaterialComboBox, bufferClassComboBox;
 
         // Material Dropdowns
         private ComboBox foundationMaterialComboBox, matMaterialComboBox, pilesMaterialComboBox,
@@ -129,6 +135,7 @@ namespace TeklaPlugin.Forms.Main
             CreatePilesTab();
             CreateElevationTab();
             CreateCapTab();
+            CreateBufferTab();
 
             // Create button
             createStructureButton = new Button();
@@ -280,6 +287,30 @@ namespace TeklaPlugin.Forms.Main
             AddLabelAndComboBox(tab, "Class:", ref capClassComboBox, 200, yPos);
         }
 
+        private void CreateBufferTab()
+        {
+            TabPage tab = new TabPage("Buffer");
+            tabControl.TabPages.Add(tab);
+
+            int yPos = 20;
+
+            AddLabelAndTextBox(tab, "Number of Buffers:", ref bufferNumberTextBox, "3", 20, yPos);
+            AddLabelAndTextBox(tab, "Spacing (S) - mm:", ref bufferSpacingTextBox, "500", 310, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Left Offset - mm:", ref bufferLeftOffsetTextBox, "200", 20, yPos);
+            AddLabelAndTextBox(tab, "Right Offset - mm:", ref bufferRightOffsetTextBox, "200", 310, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Width (W) - mm:", ref bufferWidthTextBox, "400", 20, yPos);
+            AddLabelAndTextBox(tab, "Breadth (B) - mm:", ref bufferBreadthTextBox, "300", 310, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Heights (comma sep) - mm:", ref bufferHeightsTextBox, "50,50,50", 20, yPos);
+            yPos += 35;
+
+            // Material & Class
+            AddLabelAndComboBox(tab, "Material:", ref bufferMaterialComboBox, 20, yPos);
+            AddLabelAndComboBox(tab, "Class:", ref bufferClassComboBox, 200, yPos);
+        }
+
         private void LoadMaterials()
         {
             try
@@ -299,6 +330,7 @@ namespace TeklaPlugin.Forms.Main
                 lamelarMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
                 circularMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
                 capMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
+                bufferMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
 
                 // Populate class dropdowns
                 var commonClasses = new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" };
@@ -308,6 +340,7 @@ namespace TeklaPlugin.Forms.Main
                 lamelarClassComboBox.Items.AddRange(commonClasses);
                 circularClassComboBox.Items.AddRange(commonClasses);
                 capClassComboBox.Items.AddRange(commonClasses);
+                bufferClassComboBox.Items.AddRange(commonClasses);
 
                 // Set default selections
                 foundationMaterialComboBox.SelectedItem = "C50/60";
@@ -322,6 +355,8 @@ namespace TeklaPlugin.Forms.Main
                 circularClassComboBox.SelectedItem = "8";
                 capMaterialComboBox.SelectedItem = "C12/15";
                 capClassComboBox.SelectedItem = "8";
+                bufferMaterialComboBox.SelectedItem = "C12/15";
+                bufferClassComboBox.SelectedItem = "8";
             }
             catch (Exception ex)
             {
@@ -1107,6 +1142,14 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(capPTextBox, "0");
             SetupTextBox(capCutXTextBox, "0");
             SetupTextBox(capCutYTextBox, "0");
+
+            SetupTextBox(bufferNumberTextBox, "3");
+            SetupTextBox(bufferSpacingTextBox, "500");
+            SetupTextBox(bufferLeftOffsetTextBox, "200");
+            SetupTextBox(bufferRightOffsetTextBox, "200");
+            SetupTextBox(bufferWidthTextBox, "400");
+            SetupTextBox(bufferBreadthTextBox, "300");
+            SetupTextBox(bufferHeightsTextBox, "50,50,50");
         }
 
         private void SetupTextBox(TextBox textBox, string defaultValue = "")
@@ -1244,11 +1287,22 @@ namespace TeklaPlugin.Forms.Main
                     Height = ParseDouble(foundationHeightTextBox.Text, 600)
                 };
 
+                var bufferParams = new TeklaPlugin.Services.Buffer.Models.BufferParameters
+                {
+                    Number = (int)ParseDouble(bufferNumberTextBox.Text, 3),
+                    Spacing = ParseDouble(bufferSpacingTextBox.Text, 500),
+                    LeftOffset = ParseDouble(bufferLeftOffsetTextBox.Text, 200),
+                    RightOffset = ParseDouble(bufferRightOffsetTextBox.Text, 200),
+                    Width = ParseDouble(bufferWidthTextBox.Text, 400),
+                    Breadth = ParseDouble(bufferBreadthTextBox.Text, 300),
+                    Heights = bufferHeightsTextBox.Text
+                };
+
                 // Run cross-object validations
                 var validator = new StructureValidator();
                 var result = validator.ValidateAll(
                     elevationType, lamelarParams, circularParams,
-                    capParams, pileParams, foundationParams);
+                    capParams, pileParams, foundationParams, bufferParams);
 
                 if (!result.IsValid)
                 {
@@ -1450,6 +1504,19 @@ namespace TeklaPlugin.Forms.Main
                     Class = capClassComboBox.SelectedItem?.ToString() ?? "8"
                 };
 
+                var bufferParams = new TeklaPlugin.Services.Buffer.Models.BufferParameters
+                {
+                    Number = int.Parse(bufferNumberTextBox.Text),
+                    Spacing = double.Parse(bufferSpacingTextBox.Text),
+                    LeftOffset = double.Parse(bufferLeftOffsetTextBox.Text),
+                    RightOffset = double.Parse(bufferRightOffsetTextBox.Text),
+                    Width = double.Parse(bufferWidthTextBox.Text),
+                    Breadth = double.Parse(bufferBreadthTextBox.Text),
+                    Heights = bufferHeightsTextBox.Text,
+                    Material = bufferMaterialComboBox.SelectedItem?.ToString() ?? "C12/15",
+                    Class = bufferClassComboBox.SelectedItem?.ToString() ?? "8"
+                };
+
                 // Create the complete structure using the unified service
                 structureCreatorService.CreateStructure(
                     globalParams,
@@ -1459,7 +1526,8 @@ namespace TeklaPlugin.Forms.Main
                     elevationType,
                     lamelarParams,
                     circularParams,
-                    capParams);
+                    capParams,
+                    bufferParams);
 
                 MessageBox.Show("Structure created successfully!", "Success",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);

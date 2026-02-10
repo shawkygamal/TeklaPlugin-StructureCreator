@@ -6,11 +6,13 @@ using TeklaPlugin.Services.Mat;
 using TeklaPlugin.Services.Piles;
 using TeklaPlugin.Services.Elevation;
 using TeklaPlugin.Services.Cap;
+using TeklaPlugin.Services.Buffer;
 using TeklaPlugin.Services.Foundation.Models;
 using TeklaPlugin.Services.Mat.Models;
 using TeklaPlugin.Services.Piles.Models;
 using TeklaPlugin.Services.Elevation.Models;
 using TeklaPlugin.Services.Cap.Models;
+using TeklaPlugin.Services.Buffer.Models;
 
 namespace TeklaPlugin.Services.Core
 {
@@ -22,6 +24,7 @@ namespace TeklaPlugin.Services.Core
         private readonly PilesService _pilesService;
         private readonly ElevationService _elevationService;
         private readonly CapService _capService;
+        private readonly BufferService _bufferService;
 
         public StructureCreatorService(Model model)
         {
@@ -31,6 +34,7 @@ namespace TeklaPlugin.Services.Core
             _pilesService = new PilesService(model);
             _elevationService = new ElevationService(model);
             _capService = new CapService(model);
+            _bufferService = new BufferService(model);
         }
 
         public void CreateStructure(
@@ -41,7 +45,8 @@ namespace TeklaPlugin.Services.Core
             ElevationType elevationType,
             TeklaPlugin.Services.Elevation.Models.LamelarElevationParameters lamelarElevation,
             TeklaPlugin.Services.Elevation.Models.CircularElevationParameters circularElevation,
-            TeklaPlugin.Services.Cap.Models.CapParameters cap)
+            TeklaPlugin.Services.Cap.Models.CapParameters cap,
+            TeklaPlugin.Services.Buffer.Models.BufferParameters buffer)
         {
             try
             {
@@ -69,6 +74,9 @@ namespace TeklaPlugin.Services.Core
 
                 // Create cap
                 _capService.CreateCap(global, cap, elevationHeight);
+
+                // Create buffers on top of cap
+                _bufferService.CreateBuffers(global, cap, buffer, elevationHeight);
 
                 _model.CommitChanges();
             }

@@ -5,6 +5,7 @@ using TeklaPlugin.Services.Cap.Models;
 using TeklaPlugin.Services.Elevation.Models;
 using TeklaPlugin.Services.Foundation.Models;
 using TeklaPlugin.Services.Piles.Models;
+using TeklaPlugin.Services.Buffer.Models;
 
 namespace TeklaPlugin.Forms.Main
 {
@@ -61,11 +62,13 @@ namespace TeklaPlugin.Forms.Main
             CircularElevationParameters circularParams,
             CapParameters capParams,
             PileParameters pileParams,
-            FoundationParameters foundationParams)
+            FoundationParameters foundationParams,
+            BufferParameters bufferParams)
         {
             var result = new ValidationResult();
             result.Merge(ValidateColumnsVsCapBeam(elevationType, lamelarParams, circularParams, capParams));
             result.Merge(ValidatePilesVsFoundation(pileParams, foundationParams));
+            result.Merge(ValidateBuffersVsCapBeam(bufferParams, capParams));
             return result;
         }
 
@@ -207,6 +210,56 @@ namespace TeklaPlugin.Forms.Main
                     $"Pile embedded length ({pileParams.EmbeddedLength:F0} mm) exceeds foundation " +
                     $"thickness ({foundationParams.Height:F0} mm). " +
                     $"Reduce embedded length or increase foundation height.");
+            }
+
+            return result;
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        //  3. Buffers vs Cap Beam
+        // ──────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Validates that buffers fit within the cap beam length.
+        /// Checks: leftOffset + N × Width + (N-1) × Spacing + rightOffset ≤ TopLength
+        /// </summary>
+        public ValidationResult ValidateBuffersVsCapBeam(
+            BufferParameters bufferParams,
+            CapParameters capParams)
+        {
+            var result = new ValidationResult();
+
+            if (bufferParams.Number <= 0) return result;
+
+            // Calculate total space needed with normal spacing
+            double totalSpaceNeeded = bufferParams.LeftOffset 
+                                    + bufferParams.Number * bufferParams.Width 
+                                    + (bufferParams.Number - 1) * bufferParams.Spacing 
+                                    + bufferParams.RightOffset;
+
+            if (totalSpaceNeeded > capParams.TopLength)
+            {
+                result.AddError(
+                    $"Buffers exceed cap beam: {bufferParams.Number} buffers with width {bufferParams.Width:F0} mm, " +
+                    $"spacing {bufferParams.Spacing:F0} mm, left offset {bufferParams.LeftOffset:F0} mm, " +
+                    $"and right offset {bufferParams.RightOffset:F0} mm require {totalSpaceNeeded:F0} mm " +
+                    $"but cap top length is only {capParams.TopLength:F0} mm. " +
+                    $"Reduce number of buffers, spacing, offsets, or buffer width.");
+            }
+
+            // Check minimum space needed (buffers touching, no spacing)
+            double minSpaceNeeded = bufferParams.LeftOffset 
+                                  + bufferParams.Number * bufferParams.Width 
+                                  + bufferParams.RightOffset;
+
+            if (minSpaceNeeded > capParams.TopLength)
+            {
+                result.AddError(
+                    $"Too many buffers: Even with zero spacing, {bufferParams.Number} buffers of width " +
+                    $"{bufferParams.Width:F0} mm with left offset {bufferParams.LeftOffset:F0} mm and " +
+                    $"right offset {bufferParams.RightOffset:F0} mm require {minSpaceNeeded:F0} mm " +
+                    $"but cap top length is only {capParams.TopLength:F0} mm. " +
+                    $"Reduce number of buffers or buffer width.");
             }
 
             return result;

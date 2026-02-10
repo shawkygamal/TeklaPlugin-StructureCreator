@@ -94,6 +94,8 @@
     <Compile Include="Services\Piles\Models\PileParameters.cs" />
     <Compile Include="Services\Elevation\Models\ElevationParameters.cs" />
     <Compile Include="Services\Cap\Models\CapParameters.cs" />
+    <Compile Include="Services\Buffer\Models\BufferParameters.cs" />
+    <Compile Include="Services\Buffer\BufferService.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TeklaQueries\MaterialsService.cs" />
