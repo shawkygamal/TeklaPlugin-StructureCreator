@@ -49,7 +49,7 @@ namespace TeklaPlugin.Forms.Main
                        circularDistanceTextBox, circularOffsetXTextBox, circularOffsetYTextBox;
 
         // Cap Parameters
-        private TextBox capTopLengthTextBox, capBottomLengthTextBox, capHeightTextBox, capWidthTextBox, capPTextBox;
+        private TextBox capTopLengthTextBox, capBottomLengthTextBox, capWidthTextBox, capDepthTextBox, capHeightDiffTextBox, capPTextBox;
 
         // Material Dropdowns
         private ComboBox foundationMaterialComboBox, matMaterialComboBox, pilesMaterialComboBox,
@@ -241,9 +241,11 @@ namespace TeklaPlugin.Forms.Main
             yPos += 35;
             AddLabelAndTextBox(tab, "Bottom Length - mm:", ref capBottomLengthTextBox, "2000", 20, yPos);
             yPos += 35;
-            AddLabelAndTextBox(tab, "Height - mm:", ref capHeightTextBox, "500", 20, yPos);
-            yPos += 35;
             AddLabelAndTextBox(tab, "Width - mm:", ref capWidthTextBox, "600", 20, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Depth - mm:", ref capDepthTextBox, "500", 20, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Height Diff (slope) - mm:", ref capHeightDiffTextBox, "300", 20, yPos);
             yPos += 35;
             AddLabelAndTextBox(tab, "P (Offset from Center) - mm:", ref capPTextBox, "0", 20, yPos);
             yPos += 35;
@@ -922,51 +924,64 @@ namespace TeklaPlugin.Forms.Main
             // Draw column outline below cap
             int columnWidth = 20;
             int columnHeight = 60;
-            g.FillRectangle(columnBrush, centerX - columnWidth/2, centerY + 10, columnWidth, columnHeight);
-            g.DrawRectangle(new Pen(Color.Black, 1), centerX - columnWidth/2, centerY + 10, columnWidth, columnHeight);
-            g.DrawString("Column", new Font("Segoe UI", 7), Brushes.Black, centerX - 15, centerY + 75);
+            int capBottom = centerY + 10;
+            g.FillRectangle(columnBrush, centerX - columnWidth / 2, capBottom, columnWidth, columnHeight);
+            g.DrawRectangle(new Pen(Color.Black, 1), centerX - columnWidth / 2, capBottom, columnWidth, columnHeight);
+            g.DrawString("Column", new Font("Segoe UI", 7), Brushes.Black, centerX - 15, capBottom + columnHeight + 5);
 
-            // Draw cap as trapezoid above column (showing slope)
+            // New shape: rectangular top + sloped bottom
+            int topHalf = 60;   // half of top length (drawing scale)
+            int botHalf = 30;   // half of bottom length (drawing scale)
+            int depthH = 20;    // depth of rectangular portion
+            int slopeH = 15;    // height diff (slope portion)
+
+            int capTop = capBottom - depthH - slopeH;
+
+            // Shape: top-left, top-right, depth-right, slope-bottom-right, slope-bottom-left, depth-left
             System.Drawing.Point[] capShape = {
-                new System.Drawing.Point(centerX - 60, centerY - 10),  // Bottom left
-                new System.Drawing.Point(centerX - 50, centerY - 20),  // Top left
-                new System.Drawing.Point(centerX + 50, centerY - 20),  // Top right
-                new System.Drawing.Point(centerX + 60, centerY - 10)   // Bottom right
+                new System.Drawing.Point(centerX - topHalf, capTop),                      // Top left
+                new System.Drawing.Point(centerX + topHalf, capTop),                      // Top right
+                new System.Drawing.Point(centerX + topHalf, capTop + depthH),             // Depth right
+                new System.Drawing.Point(centerX + botHalf, capTop + depthH + slopeH),    // Bottom right (slope end)
+                new System.Drawing.Point(centerX - botHalf, capTop + depthH + slopeH),    // Bottom left (slope end)
+                new System.Drawing.Point(centerX - topHalf, capTop + depthH)               // Depth left
             };
 
             g.FillPolygon(capBrush, capShape);
             g.DrawPolygon(outlinePen, capShape);
 
             // Add dimensions
-            // Height (H)
-            g.DrawLine(dimensionPen, centerX - 70, centerY - 10, centerX - 70, centerY + 10);
-            g.DrawLine(dimensionPen, centerX - 75, centerY - 10, centerX - 65, centerY - 10);
-            g.DrawLine(dimensionPen, centerX - 75, centerY + 10, centerX - 65, centerY + 10);
-            // Rotate and draw "H (Height)" text vertically
-            System.Drawing.Drawing2D.Matrix matrix = g.Transform;
-            g.RotateTransform(-90);
-            g.DrawString("H (Height)", paramFont, Brushes.Orange, -(centerY), centerX - 80);
-            g.Transform = matrix;
+            // Top Length
+            g.DrawLine(dimensionPen, centerX - topHalf, capTop - 10, centerX + topHalf, capTop - 10);
+            g.DrawLine(dimensionPen, centerX - topHalf, capTop - 15, centerX - topHalf, capTop - 5);
+            g.DrawLine(dimensionPen, centerX + topHalf, capTop - 15, centerX + topHalf, capTop - 5);
+            g.DrawString("Top Length", paramFont, Brushes.Orange, centerX - 25, capTop - 22);
 
-            // Top Width (B)
-            g.DrawLine(dimensionPen, centerX - 50, centerY - 25, centerX + 50, centerY - 25);
-            g.DrawLine(dimensionPen, centerX - 50, centerY - 30, centerX - 50, centerY - 20);
-            g.DrawLine(dimensionPen, centerX + 50, centerY - 30, centerX + 50, centerY - 20);
-            g.DrawString("B (Top Width)", paramFont, Brushes.Orange, centerX - 35, centerY - 35);
+            // Bottom Length
+            int botY = capTop + depthH + slopeH;
+            g.DrawLine(dimensionPen, centerX - botHalf, botY + 5, centerX + botHalf, botY + 5);
+            g.DrawLine(dimensionPen, centerX - botHalf, botY, centerX - botHalf, botY + 10);
+            g.DrawLine(dimensionPen, centerX + botHalf, botY, centerX + botHalf, botY + 10);
+            g.DrawString("Bottom Length", paramFont, Brushes.Orange, centerX - 30, botY + 8);
 
-            // Bottom Width
-            g.DrawLine(dimensionPen, centerX - 60, centerY - 5, centerX + 60, centerY - 5);
-            g.DrawLine(dimensionPen, centerX - 60, centerY - 10, centerX - 60, centerY);
-            g.DrawLine(dimensionPen, centerX + 60, centerY - 10, centerX + 60, centerY);
-            g.DrawString("Bottom Width", paramFont, Brushes.Orange, centerX - 35, centerY + 5);
+            // Depth (right side)
+            int dimX = centerX + topHalf + 10;
+            g.DrawLine(dimensionPen, dimX, capTop, dimX, capTop + depthH);
+            g.DrawLine(dimensionPen, dimX - 5, capTop, dimX + 5, capTop);
+            g.DrawLine(dimensionPen, dimX - 5, capTop + depthH, dimX + 5, capTop + depthH);
+            g.DrawString("Depth", paramFont, Brushes.Red, dimX + 8, capTop + depthH / 2 - 5);
+
+            // Height Diff (right side, below depth)
+            g.DrawLine(dimensionPen, dimX, capTop + depthH, dimX, botY);
+            g.DrawLine(dimensionPen, dimX - 5, botY, dimX + 5, botY);
+            g.DrawString("Height Diff", paramFont, Brushes.Red, dimX + 8, capTop + depthH + slopeH / 2 - 5);
 
             // Slope indicator
-            g.DrawLine(new Pen(Color.Red, 1), centerX - 60, centerY - 10, centerX - 50, centerY - 20);
-            g.DrawLine(new Pen(Color.Red, 1), centerX + 60, centerY - 10, centerX + 50, centerY - 20);
-            g.DrawString("Slope", new Font("Segoe UI", 6), Brushes.Red, centerX + 25, centerY - 15);
+            g.DrawLine(new Pen(Color.Red, 1), centerX - topHalf, capTop + depthH, centerX - botHalf, botY);
+            g.DrawLine(new Pen(Color.Red, 1), centerX + topHalf, capTop + depthH, centerX + botHalf, botY);
 
             g.DrawString("Cap Beam", new Font("Segoe UI", 9, FontStyle.Bold), Brushes.Black, 20, height - 40);
-            g.DrawString("Above Column with Dimensions", labelFont, Brushes.Gray, 20, height - 25);
+            g.DrawString("Rect top + Sloped bottom", labelFont, Brushes.Gray, 20, height - 25);
         }
 
         private void DrawDimensionLines(Graphics g, int width, int height, double scale, int centerX, float groundY)
@@ -1061,8 +1076,9 @@ namespace TeklaPlugin.Forms.Main
 
             SetupTextBox(capTopLengthTextBox, "4000");
             SetupTextBox(capBottomLengthTextBox, "2000");
-            SetupTextBox(capHeightTextBox, "500");
             SetupTextBox(capWidthTextBox, "600");
+            SetupTextBox(capDepthTextBox, "500");
+            SetupTextBox(capHeightDiffTextBox, "300");
             SetupTextBox(capPTextBox, "0");
         }
 
@@ -1175,8 +1191,9 @@ namespace TeklaPlugin.Forms.Main
                 {
                     TopLength = ParseDouble(capTopLengthTextBox.Text, 4000),
                     BottomLength = ParseDouble(capBottomLengthTextBox.Text, 2000),
-                    Height = ParseDouble(capHeightTextBox.Text, 500),
                     Width = ParseDouble(capWidthTextBox.Text, 600),
+                    Depth = ParseDouble(capDepthTextBox.Text, 500),
+                    HeightDiff = ParseDouble(capHeightDiffTextBox.Text, 300),
                     P = ParseDouble(capPTextBox.Text, 0)
                 };
 
@@ -1392,8 +1409,9 @@ namespace TeklaPlugin.Forms.Main
                 {
                     TopLength = double.Parse(capTopLengthTextBox.Text),
                     BottomLength = double.Parse(capBottomLengthTextBox.Text),
-                    Height = double.Parse(capHeightTextBox.Text),
                     Width = double.Parse(capWidthTextBox.Text),
+                    Depth = double.Parse(capDepthTextBox.Text),
+                    HeightDiff = double.Parse(capHeightDiffTextBox.Text),
                     P = double.Parse(capPTextBox.Text),
                     Material = capMaterialComboBox.SelectedItem?.ToString() ?? "C12/15",
                     Class = capClassComboBox.SelectedItem?.ToString() ?? "8"

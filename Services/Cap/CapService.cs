@@ -31,14 +31,15 @@ namespace TeklaPlugin.Services.Cap
             double offsetX = cap.P;
             double offsetY = 0;
 
-            // Rotate the offset by the global rotation angle
             double rotatedOffsetX = offsetX * Math.Cos(rotationAngleRadians) - offsetY * Math.Sin(rotationAngleRadians);
             double rotatedOffsetY = offsetX * Math.Sin(rotationAngleRadians) + offsetY * Math.Cos(rotationAngleRadians);
 
-            // Final position with column at bottom of lower (smaller) line and P offset
             double finalX = global.PositionX + rotatedOffsetX;
             double finalY = global.PositionY + rotatedOffsetY;
-            double finalZ_top = global.PositionZ + elevationCircularHeight + cap.Height;
+
+            // Total beam height = Depth (rectangular top) + HeightDiff (sloped bottom)
+            double totalHeight = cap.Depth + cap.HeightDiff;
+            double finalZ_top = global.PositionZ + elevationCircularHeight + totalHeight;
             double finalZ_bottom = global.PositionZ + elevationCircularHeight;
 
             Beam capBeam = new Beam();
@@ -66,15 +67,15 @@ namespace TeklaPlugin.Services.Cap
                 CreateSkewCutPlanes(cap, global, capParams, centerX, centerY);
             }
 
-            // Apply tapered cuts for trapezoidal shape
+            // Apply tapered cuts for trapezoidal shape (only in the HeightDiff portion)
             Point beamCenter = cap.StartPoint;
             double rotRad = -cap.Position.RotationOffset * Math.PI / 180.0;
 
             double topHalf = capParams.TopLength / 2.0;
             double botHalf = capParams.BottomLength / 2.0;
 
-            CreateTaperCutPlane(cap, beamCenter, rotRad, topHalf, botHalf, capParams.Height, isPositiveSide: true);
-            CreateTaperCutPlane(cap, beamCenter, rotRad, topHalf, botHalf, capParams.Height, isPositiveSide: false);
+            CreateTaperCutPlane(cap, beamCenter, rotRad, topHalf, botHalf, capParams.Depth, capParams.HeightDiff, isPositiveSide: true);
+            CreateTaperCutPlane(cap, beamCenter, rotRad, topHalf, botHalf, capParams.Depth, capParams.HeightDiff, isPositiveSide: false);
         }
 
         private void CreateSkewCutPlanes(Beam cap, TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.CapParameters capParams, double centerX, double centerY)
@@ -131,24 +132,24 @@ namespace TeklaPlugin.Services.Cap
             cutPlane_skew_2.Insert();
         }
 
-        private void CreateTaperCutPlane(Beam cap, Point center, double rotRad, double topHalf, double botHalf, double height, bool isPositiveSide)
+        private void CreateTaperCutPlane(Beam cap, Point center, double rotRad, double topHalf, double botHalf, double depth, double heightDiff, bool isPositiveSide)
         {
             double sign = isPositiveSide ? 1.0 : -1.0;
 
-            // 1. Define 3 points in Local Coordinates (X along Length, Z down)
-            // Point A (Top Edge)
+            // 1. Define 3 points in Local Coordinates (X along Length, Z down from beam top)
+            // Point A (Start of slope - at Depth level below top)
             double xA = sign * topHalf;
             double yA = 0;
-            double zA = 0;
+            double zA = -depth; // Slope starts at Depth below beam top
 
-            // Point B (Bottom Edge)
+            // Point B (Bottom Edge - at Depth + HeightDiff below top)
             double xB = sign * botHalf;
             double yB = 0;
-            double zB = -height;
+            double zB = -(depth + heightDiff); // Slope ends at bottom
 
-            // Point C (Width definer - parallel to Y, using Width parameter)
+            // Point C (Width definer - parallel to Y, at same level as A)
             double xC = xA;
-            double yC = 500.0; // Offset in Width direction (same as simpleBeamCut.cs)
+            double yC = 500.0; // Offset in Width direction
             double zC = zA;
 
             // 2. Rotate to Global Coordinates
