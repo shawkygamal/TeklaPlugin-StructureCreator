@@ -52,6 +52,7 @@ namespace TeklaPlugin.Forms.Main
         // Cap Parameters
         private TextBox capTopLengthTextBox, capBottomLengthTextBox, capWidthTextBox, capDepthTextBox, capHeightDiffTextBox, capPTextBox;
         private TextBox capCutXTextBox, capCutYTextBox;
+        private TextBox capD1TextBox, capD2TextBox, capD3TextBox, capD4TextBox;
         private ComboBox capCutSideComboBox;
 
         // Buffer Parameters
@@ -280,6 +281,14 @@ namespace TeklaPlugin.Forms.Main
             capCutSideComboBox.Size = new Size(120, 23);
             capCutSideComboBox.Font = new Font("Segoe UI", 9F);
             tab.Controls.Add(capCutSideComboBox);
+            yPos += 35;
+
+            // Plan taper (D1-D4, all 0 = rectangular plan, >0 = trapezoidal plan)
+            AddLabelAndTextBox(tab, "D1 (left top) - mm:", ref capD1TextBox, "0", 20, yPos);
+            AddLabelAndTextBox(tab, "D2 (left bot) - mm:", ref capD2TextBox, "0", 310, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "D3 (right top) - mm:", ref capD3TextBox, "0", 20, yPos);
+            AddLabelAndTextBox(tab, "D4 (right bot) - mm:", ref capD4TextBox, "0", 310, yPos);
             yPos += 35;
 
             // Material & Class
@@ -1142,6 +1151,10 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(capPTextBox, "0");
             SetupTextBox(capCutXTextBox, "0");
             SetupTextBox(capCutYTextBox, "0");
+            SetupTextBox(capD1TextBox, "0");
+            SetupTextBox(capD2TextBox, "0");
+            SetupTextBox(capD3TextBox, "0");
+            SetupTextBox(capD4TextBox, "0");
 
             SetupTextBox(bufferNumberTextBox, "3");
             SetupTextBox(bufferSpacingTextBox, "500");
@@ -1267,7 +1280,11 @@ namespace TeklaPlugin.Forms.Main
                     P = ParseDouble(capPTextBox.Text, 0),
                     CutX = ParseDouble(capCutXTextBox.Text, 0),
                     CutY = ParseDouble(capCutYTextBox.Text, 0),
-                    CutSide = capCutSideComboBox.SelectedItem?.ToString() ?? "Right"
+                    CutSide = capCutSideComboBox.SelectedItem?.ToString() ?? "Right",
+                    D1 = ParseDouble(capD1TextBox.Text, 0),
+                    D2 = ParseDouble(capD2TextBox.Text, 0),
+                    D3 = ParseDouble(capD3TextBox.Text, 0),
+                    D4 = ParseDouble(capD4TextBox.Text, 0)
                 };
 
                 var pileParams = new TeklaPlugin.Services.Piles.Models.PileParameters
@@ -1500,6 +1517,10 @@ namespace TeklaPlugin.Forms.Main
                     CutX = double.Parse(capCutXTextBox.Text),
                     CutY = double.Parse(capCutYTextBox.Text),
                     CutSide = capCutSideComboBox.SelectedItem?.ToString() ?? "Right",
+                    D1 = double.Parse(capD1TextBox.Text),
+                    D2 = double.Parse(capD2TextBox.Text),
+                    D3 = double.Parse(capD3TextBox.Text),
+                    D4 = double.Parse(capD4TextBox.Text),
                     Material = capMaterialComboBox.SelectedItem?.ToString() ?? "C12/15",
                     Class = capClassComboBox.SelectedItem?.ToString() ?? "8"
                 };
