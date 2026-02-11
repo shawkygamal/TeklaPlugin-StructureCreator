@@ -13,6 +13,7 @@ namespace TeklaPlugin.Services.Cap.Models
         public double CutX { get; set; } // L-cut horizontal dimension (width direction), 0 = no cut
         public double CutY { get; set; } // L-cut vertical dimension (height direction), 0 = no cut
         public string CutSide { get; set; } = "Right"; // Which side to cut: "Right" or "Left"
+        public double F { get; set; } // Cross-section width taper in HeightDiff portion (0 = no taper)
         public double D1 { get; set; } // Plan taper: width above centerline at left end (0 = no taper, use Width)
         public double D2 { get; set; } // Plan taper: width below centerline at left end
         public double D3 { get; set; } // Plan taper: width above centerline at right end

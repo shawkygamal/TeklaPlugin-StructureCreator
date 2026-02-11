@@ -51,7 +51,7 @@ namespace TeklaPlugin.Forms.Main
 
         // Cap Parameters
         private TextBox capTopLengthTextBox, capBottomLengthTextBox, capWidthTextBox, capDepthTextBox, capHeightDiffTextBox, capPTextBox;
-        private TextBox capCutXTextBox, capCutYTextBox;
+        private TextBox capCutXTextBox, capCutYTextBox, capFTextBox;
         private TextBox capD1TextBox, capD2TextBox, capD3TextBox, capD4TextBox;
         private ComboBox capCutSideComboBox;
 
@@ -256,6 +256,7 @@ namespace TeklaPlugin.Forms.Main
             AddLabelAndTextBox(tab, "Depth - mm:", ref capDepthTextBox, "500", 20, yPos);
             yPos += 35;
             AddLabelAndTextBox(tab, "Height Diff (slope) - mm:", ref capHeightDiffTextBox, "300", 20, yPos);
+            AddLabelAndTextBox(tab, "F (width taper) - mm:", ref capFTextBox, "0", 310, yPos);
             yPos += 35;
             AddLabelAndTextBox(tab, "P (Offset from Center) - mm:", ref capPTextBox, "0", 20, yPos);
             yPos += 35;
@@ -1151,6 +1152,7 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(capPTextBox, "0");
             SetupTextBox(capCutXTextBox, "0");
             SetupTextBox(capCutYTextBox, "0");
+            SetupTextBox(capFTextBox, "0");
             SetupTextBox(capD1TextBox, "0");
             SetupTextBox(capD2TextBox, "0");
             SetupTextBox(capD3TextBox, "0");
@@ -1281,6 +1283,7 @@ namespace TeklaPlugin.Forms.Main
                     CutX = ParseDouble(capCutXTextBox.Text, 0),
                     CutY = ParseDouble(capCutYTextBox.Text, 0),
                     CutSide = capCutSideComboBox.SelectedItem?.ToString() ?? "Right",
+                    F = ParseDouble(capFTextBox.Text, 0),
                     D1 = ParseDouble(capD1TextBox.Text, 0),
                     D2 = ParseDouble(capD2TextBox.Text, 0),
                     D3 = ParseDouble(capD3TextBox.Text, 0),
@@ -1517,6 +1520,7 @@ namespace TeklaPlugin.Forms.Main
                     CutX = double.Parse(capCutXTextBox.Text),
                     CutY = double.Parse(capCutYTextBox.Text),
                     CutSide = capCutSideComboBox.SelectedItem?.ToString() ?? "Right",
+                    F = double.Parse(capFTextBox.Text),
                     D1 = double.Parse(capD1TextBox.Text),
                     D2 = double.Parse(capD2TextBox.Text),
                     D3 = double.Parse(capD3TextBox.Text),

@@ -68,6 +68,11 @@ namespace TeklaPlugin.Services.Cap
                 {
                     CreatePlanTaperCuts(capBeam, cap, finalX, finalY, finalZ_top, widthi_cap, global.RotationAngle);
                 }
+
+                if (cap.F > 0 && cap.HeightDiff > 0)
+                {
+                    CreateWidthTaperCuts(capBeam, cap, effectiveWidth, global.RotationAngle);
+                }
             }
         }
 
@@ -278,6 +283,68 @@ namespace TeklaPlugin.Services.Cap
 
             // Define plane axes
             Vector vecAB = new Vector(pB.X - pA.X, pB.Y - pA.Y, pB.Z - pA.Z);
+            Vector vecAC = new Vector(pC.X - pA.X, pC.Y - pA.Y, pC.Z - pA.Z);
+
+            // Ensure normal points outward (away from centerline)
+            Vector normal = vecAB.Cross(vecAC);
+            Vector centerToOut = new Vector(pA.X - center.X, pA.Y - center.Y, 0);
+
+            if (normal.Dot(centerToOut) < 0)
+            {
+                vecAC = new Vector(-vecAC.X, -vecAC.Y, -vecAC.Z);
+            }
+
+            CutPlane cut = new CutPlane();
+            cut.Father = cap;
+            cut.Plane = new Plane();
+            cut.Plane.Origin = pA;
+            cut.Plane.AxisX = vecAB;
+            cut.Plane.AxisY = vecAC;
+
+            cut.Insert();
+        }
+
+        private void CreateWidthTaperCuts(Beam cap, Models.CapParameters capParams, double effectiveWidth, double rotationAngle)
+        {
+            double rotRad = rotationAngle * Math.PI / 180.0;
+            Point center = cap.StartPoint; // Beam top center
+            double halfWidth = effectiveWidth / 2.0;
+
+            // Positive Y side (one side of width)
+            CreateWidthTaperCutPlane(cap, center, rotRad, halfWidth, capParams.F, capParams.Depth, capParams.HeightDiff, isPositiveSide: true);
+
+            // Negative Y side (other side of width)
+            CreateWidthTaperCutPlane(cap, center, rotRad, halfWidth, capParams.F, capParams.Depth, capParams.HeightDiff, isPositiveSide: false);
+        }
+
+        private void CreateWidthTaperCutPlane(Beam cap, Point center, double rotRad, double halfWidth, double f, double depth, double heightDiff, bool isPositiveSide)
+        {
+            double sign = isPositiveSide ? 1.0 : -1.0;
+
+            // Local coordinates: X along length, Y along width, Z down from beam top
+            // Point A: at Depth level, at full width edge
+            double xA = 0;
+            double yA = sign * halfWidth;
+            double zA = -depth;
+
+            // Point B: at bottom, width reduced by F
+            double xB = 0;
+            double yB = sign * (halfWidth - f);
+            double zB = -(depth + heightDiff);
+
+            // Point C: offset along length to define the plane (extends full length)
+            double xC = 500;
+            double yC = yA;
+            double zC = zA;
+
+            // Rotate and translate to global coordinates
+            Point pA = RotateAndTranslate(center, rotRad, xA, yA, zA);
+            Point pB = RotateAndTranslate(center, rotRad, xB, yB, zB);
+            Point pC = RotateAndTranslate(center, rotRad, xC, yC, zC);
+
+            // AxisX: along the slope (A -> B)
+            Vector vecAB = new Vector(pB.X - pA.X, pB.Y - pA.Y, pB.Z - pA.Z);
+            // AxisY: along length (A -> C)
             Vector vecAC = new Vector(pC.X - pA.X, pC.Y - pA.Y, pC.Z - pA.Z);
 
             // Ensure normal points outward (away from centerline)
