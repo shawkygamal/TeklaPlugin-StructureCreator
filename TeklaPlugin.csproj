@@ -90,6 +90,8 @@
     </Compile>
     <Compile Include="Services\Core\Models\GlobalParameters.cs" />
     <Compile Include="Services\Foundation\Models\FoundationParameters.cs" />
+    <Compile Include="Services\Foundation\Models\FoundationReinforcementParameters.cs" />
+    <Compile Include="Services\Foundation\FoundationReinforcementService.cs" />
     <Compile Include="Services\Mat\Models\MatParameters.cs" />
     <Compile Include="Services\Piles\Models\PileParameters.cs" />
     <Compile Include="Services\Elevation\Models\ElevationParameters.cs" />

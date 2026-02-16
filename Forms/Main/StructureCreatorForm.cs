@@ -35,6 +35,16 @@ namespace TeklaPlugin.Forms.Main
         // Foundation Parameters
         private TextBox foundationWidthTextBox, foundationLengthTextBox, foundationHeightTextBox;
 
+        // Foundation Reinforcement Parameters
+        private TextBox rebarT1DiaTextBox, rebarT2DiaTextBox, rebarB1DiaTextBox, rebarB2DiaTextBox;
+        private TextBox rebarT1SpacingTextBox, rebarT2SpacingTextBox, rebarB1SpacingTextBox, rebarB2SpacingTextBox;
+        private ComboBox rebarT1DirCombo, rebarT2DirCombo, rebarB1DirCombo, rebarB2DirCombo;
+        private TextBox rebarTopCoverTextBox, rebarBottomCoverTextBox;
+        private TextBox rebarHookLengthTextBox;
+        private TextBox rebarSideDiaTextBox, rebarSideSpacingTextBox;
+        private TextBox rebarIntWidthDiaTextBox, rebarIntWidthLayersTextBox, rebarIntWidthSpacingTextBox;
+        private TextBox rebarIntLengthDiaTextBox, rebarIntLengthLayersTextBox, rebarIntLengthSpacingTextBox;
+
         // Mat Parameters
         private TextBox matCantileverTextBox, matThicknessTextBox;
 
@@ -1073,6 +1083,80 @@ namespace TeklaPlugin.Forms.Main
             return double.TryParse(text, out double result) ? result : defaultValue;
         }
 
+        private TeklaPlugin.Services.Foundation.Models.RebarDirection ParseDirection(ComboBox combo)
+        {
+            string val = combo.SelectedItem?.ToString() ?? "Length";
+            return val == "Width"
+                ? TeklaPlugin.Services.Foundation.Models.RebarDirection.Width
+                : TeklaPlugin.Services.Foundation.Models.RebarDirection.Length;
+        }
+
+        private TeklaPlugin.Services.Foundation.Models.FoundationReinforcementParameters BuildReinforcementParams()
+        {
+            var rebar = new TeklaPlugin.Services.Foundation.Models.FoundationReinforcementParameters
+            {
+                T1 = new TeklaPlugin.Services.Foundation.Models.RebarLayer
+                {
+                    Diameter = ParseDouble(rebarT1DiaTextBox.Text, 25),
+                    Direction = ParseDirection(rebarT1DirCombo),
+                    Spacing = ParseDouble(rebarT1SpacingTextBox.Text, 200)
+                },
+                T2 = new TeklaPlugin.Services.Foundation.Models.RebarLayer
+                {
+                    Diameter = ParseDouble(rebarT2DiaTextBox.Text, 25),
+                    Direction = ParseDirection(rebarT2DirCombo),
+                    Spacing = ParseDouble(rebarT2SpacingTextBox.Text, 200)
+                },
+                B1 = new TeklaPlugin.Services.Foundation.Models.RebarLayer
+                {
+                    Diameter = ParseDouble(rebarB1DiaTextBox.Text, 25),
+                    Direction = ParseDirection(rebarB1DirCombo),
+                    Spacing = ParseDouble(rebarB1SpacingTextBox.Text, 200)
+                },
+                B2 = new TeklaPlugin.Services.Foundation.Models.RebarLayer
+                {
+                    Diameter = ParseDouble(rebarB2DiaTextBox.Text, 25),
+                    Direction = ParseDirection(rebarB2DirCombo),
+                    Spacing = ParseDouble(rebarB2SpacingTextBox.Text, 200)
+                },
+                TopCover = ParseDouble(rebarTopCoverTextBox.Text, 50),
+                BottomCover = ParseDouble(rebarBottomCoverTextBox.Text, 50),
+                HookLength = ParseDouble(rebarHookLengthTextBox.Text, 0),
+                Side = new TeklaPlugin.Services.Foundation.Models.SideReinforcement
+                {
+                    Diameter = ParseDouble(rebarSideDiaTextBox.Text, 12),
+                    Spacing = ParseDouble(rebarSideSpacingTextBox.Text, 200)
+                }
+            };
+
+            // Add intermediate layers if specified
+            int intWidthLayers = (int)ParseDouble(rebarIntWidthLayersTextBox.Text, 0);
+            if (intWidthLayers > 0)
+            {
+                rebar.IntermediateLayers.Add(new TeklaPlugin.Services.Foundation.Models.IntermediateReinforcement
+                {
+                    Diameter = ParseDouble(rebarIntWidthDiaTextBox.Text, 16),
+                    Direction = TeklaPlugin.Services.Foundation.Models.RebarDirection.Width,
+                    NumberOfLayers = intWidthLayers,
+                    Spacing = ParseDouble(rebarIntWidthSpacingTextBox.Text, 200)
+                });
+            }
+
+            int intLengthLayers = (int)ParseDouble(rebarIntLengthLayersTextBox.Text, 0);
+            if (intLengthLayers > 0)
+            {
+                rebar.IntermediateLayers.Add(new TeklaPlugin.Services.Foundation.Models.IntermediateReinforcement
+                {
+                    Diameter = ParseDouble(rebarIntLengthDiaTextBox.Text, 16),
+                    Direction = TeklaPlugin.Services.Foundation.Models.RebarDirection.Length,
+                    NumberOfLayers = intLengthLayers,
+                    Spacing = ParseDouble(rebarIntLengthSpacingTextBox.Text, 200)
+                });
+            }
+
+            return rebar;
+        }
+
         private void AddTooltips()
         {
             var toolTip = new ToolTip();
@@ -1117,6 +1201,27 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(foundationWidthTextBox, "2000");
             SetupTextBox(foundationLengthTextBox, "4000");
             SetupTextBox(foundationHeightTextBox, "600");
+
+            // Foundation reinforcement defaults
+            SetupTextBox(rebarT1DiaTextBox, "25");
+            SetupTextBox(rebarT2DiaTextBox, "25");
+            SetupTextBox(rebarB1DiaTextBox, "25");
+            SetupTextBox(rebarB2DiaTextBox, "25");
+            SetupTextBox(rebarTopCoverTextBox, "50");
+            SetupTextBox(rebarBottomCoverTextBox, "50");
+            SetupTextBox(rebarHookLengthTextBox, "0");
+            SetupTextBox(rebarB1SpacingTextBox, "200");
+            SetupTextBox(rebarB2SpacingTextBox, "200");
+            SetupTextBox(rebarT1SpacingTextBox, "200");
+            SetupTextBox(rebarT2SpacingTextBox, "200");
+            SetupTextBox(rebarSideDiaTextBox, "12");
+            SetupTextBox(rebarSideSpacingTextBox, "200");
+            SetupTextBox(rebarIntWidthDiaTextBox, "16");
+            SetupTextBox(rebarIntWidthLayersTextBox, "0");
+            SetupTextBox(rebarIntWidthSpacingTextBox, "200");
+            SetupTextBox(rebarIntLengthDiaTextBox, "16");
+            SetupTextBox(rebarIntLengthLayersTextBox, "0");
+            SetupTextBox(rebarIntLengthSpacingTextBox, "200");
 
             SetupTextBox(matCantileverTextBox, "300");
             SetupTextBox(matThicknessTextBox, "200");
@@ -1180,21 +1285,103 @@ namespace TeklaPlugin.Forms.Main
         private void CreateFoundationTab()
         {
             TabPage tab = new TabPage("Foundation");
+            tab.AutoScroll = true;
             tabControl.TabPages.Add(tab);
 
             int yPos = 20;
 
             // Foundation Dimensions
             AddLabelAndTextBox(tab, "Width (mm):", ref foundationWidthTextBox, "2000", 20, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Length (mm):", ref foundationLengthTextBox, "4000", 20, yPos);
-            yPos += 35;
+            AddLabelAndTextBox(tab, "Length (mm):", ref foundationLengthTextBox, "4000", 310, yPos);
+            yPos += 30;
             AddLabelAndTextBox(tab, "Height (mm):", ref foundationHeightTextBox, "600", 20, yPos);
-            yPos += 35;
+            yPos += 30;
 
             // Material & Class
             AddLabelAndComboBox(tab, "Material:", ref foundationMaterialComboBox, 20, yPos);
-            AddLabelAndComboBox(tab, "Class:", ref foundationClassComboBox, 200, yPos);
+            AddLabelAndComboBox(tab, "Class:", ref foundationClassComboBox, 310, yPos);
+            yPos += 35;
+
+            // --- Reinforcement Section ---
+            Label rebarHeader = new Label();
+            rebarHeader.Text = "── Reinforcement ──";
+            rebarHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            rebarHeader.Location = new System.Drawing.Point(20, yPos);
+            rebarHeader.AutoSize = true;
+            tab.Controls.Add(rebarHeader);
+            yPos += 25;
+
+            // Cover
+            AddLabelAndTextBox(tab, "Top Cover (mm):", ref rebarTopCoverTextBox, "50", 20, yPos);
+            AddLabelAndTextBox(tab, "Bottom Cover (mm):", ref rebarBottomCoverTextBox, "50", 310, yPos);
+            yPos += 30;
+
+            // B1 - most bottom layer
+            AddLabelAndTextBox(tab, "B1 Dia (mm):", ref rebarB1DiaTextBox, "25", 20, yPos);
+            AddLabelAndDirectionCombo(tab, "B1 Dir:", ref rebarB1DirCombo, "Length", 310, yPos);
+            yPos += 30;
+            // B2 - second bottom layer
+            AddLabelAndTextBox(tab, "B2 Dia (mm):", ref rebarB2DiaTextBox, "25", 20, yPos);
+            AddLabelAndDirectionCombo(tab, "B2 Dir:", ref rebarB2DirCombo, "Width", 310, yPos);
+            yPos += 30;
+            // Bottom spacing
+            AddLabelAndTextBox(tab, "B1 Spacing (mm):", ref rebarB1SpacingTextBox, "200", 20, yPos);
+            AddLabelAndTextBox(tab, "B2 Spacing (mm):", ref rebarB2SpacingTextBox, "200", 310, yPos);
+            yPos += 30;
+
+            // T1 - most top layer
+            AddLabelAndTextBox(tab, "T1 Dia (mm):", ref rebarT1DiaTextBox, "25", 20, yPos);
+            AddLabelAndDirectionCombo(tab, "T1 Dir:", ref rebarT1DirCombo, "Length", 310, yPos);
+            yPos += 30;
+            // T2 - second top layer
+            AddLabelAndTextBox(tab, "T2 Dia (mm):", ref rebarT2DiaTextBox, "25", 20, yPos);
+            AddLabelAndDirectionCombo(tab, "T2 Dir:", ref rebarT2DirCombo, "Width", 310, yPos);
+            yPos += 30;
+            // Top spacing
+            AddLabelAndTextBox(tab, "T1 Spacing (mm):", ref rebarT1SpacingTextBox, "200", 20, yPos);
+            AddLabelAndTextBox(tab, "T2 Spacing (mm):", ref rebarT2SpacingTextBox, "200", 310, yPos);
+            yPos += 30;
+
+            // Hook length (applies to T1, T2, B1, B2)
+            AddLabelAndTextBox(tab, "Hook Length (mm):", ref rebarHookLengthTextBox, "0", 20, yPos);
+            yPos += 30;
+
+            // Side Reinforcement
+            AddLabelAndTextBox(tab, "Side Dia (mm):", ref rebarSideDiaTextBox, "12", 20, yPos);
+            AddLabelAndTextBox(tab, "Side Spacing (mm):", ref rebarSideSpacingTextBox, "200", 310, yPos);
+            yPos += 30;
+
+            // Intermediate - Width direction
+            AddLabelAndTextBox(tab, "Int. Width Dia (mm):", ref rebarIntWidthDiaTextBox, "16", 20, yPos);
+            AddLabelAndTextBox(tab, "Int. Width Layers:", ref rebarIntWidthLayersTextBox, "0", 310, yPos);
+            yPos += 30;
+            AddLabelAndTextBox(tab, "Int. Width Spc (mm):", ref rebarIntWidthSpacingTextBox, "200", 20, yPos);
+            yPos += 30;
+
+            // Intermediate - Length direction
+            AddLabelAndTextBox(tab, "Int. Length Dia (mm):", ref rebarIntLengthDiaTextBox, "16", 20, yPos);
+            AddLabelAndTextBox(tab, "Int. Length Layers:", ref rebarIntLengthLayersTextBox, "0", 310, yPos);
+            yPos += 30;
+            AddLabelAndTextBox(tab, "Int. Length Spc (mm):", ref rebarIntLengthSpacingTextBox, "200", 20, yPos);
+        }
+
+        private void AddLabelAndDirectionCombo(Control parent, string labelText, ref ComboBox comboBox, string defaultValue, int x, int y)
+        {
+            Label label = new Label();
+            label.Text = labelText;
+            label.Location = new System.Drawing.Point(x, y);
+            label.Size = new Size(150, 20);
+            label.Font = new Font("Segoe UI", 9F);
+            parent.Controls.Add(label);
+
+            comboBox = new ComboBox();
+            comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox.Items.AddRange(new object[] { "Width", "Length" });
+            comboBox.SelectedItem = defaultValue;
+            comboBox.Location = new System.Drawing.Point(x + 160, y);
+            comboBox.Size = new Size(120, 23);
+            comboBox.Font = new Font("Segoe UI", 9F);
+            parent.Controls.Add(comboBox);
         }
 
         private void CreateMatTab()
@@ -1304,7 +1491,8 @@ namespace TeklaPlugin.Forms.Main
                 {
                     Width = ParseDouble(foundationWidthTextBox.Text, 2000),
                     Length = ParseDouble(foundationLengthTextBox.Text, 4000),
-                    Height = ParseDouble(foundationHeightTextBox.Text, 600)
+                    Height = ParseDouble(foundationHeightTextBox.Text, 600),
+                    Reinforcement = BuildReinforcementParams()
                 };
 
                 var bufferParams = new TeklaPlugin.Services.Buffer.Models.BufferParameters
@@ -1437,7 +1625,7 @@ namespace TeklaPlugin.Forms.Main
                         "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-
+                //here
                 // Create StructureCreatorService
                 var structureCreatorService = new StructureCreatorService(model);
 
@@ -1457,7 +1645,8 @@ namespace TeklaPlugin.Forms.Main
                     Length = double.Parse(foundationLengthTextBox.Text),
                     Height = double.Parse(foundationHeightTextBox.Text),
                     Material = foundationMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
-                    Class = foundationClassComboBox.SelectedItem?.ToString() ?? "8"
+                    Class = foundationClassComboBox.SelectedItem?.ToString() ?? "8",
+                    Reinforcement = BuildReinforcementParams()
                 };
 
                 var matParams = new TeklaPlugin.Services.Mat.Models.MatParameters

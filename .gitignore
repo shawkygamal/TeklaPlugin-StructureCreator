@@ -71,6 +71,7 @@ packages/
 *.bak
 *.backup
 *.orig
+*.png
 
 # OS generated files
 .DS_Store
