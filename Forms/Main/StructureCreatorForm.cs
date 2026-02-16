@@ -1198,7 +1198,7 @@ namespace TeklaPlugin.Forms.Main
         private void AddInputValidation()
         {
             // Setup all textboxes with default values (no validation for now)
-            SetupTextBox(foundationWidthTextBox, "2000");
+            SetupTextBox(foundationWidthTextBox, "3000");
             SetupTextBox(foundationLengthTextBox, "4000");
             SetupTextBox(foundationHeightTextBox, "600");
 
@@ -1226,13 +1226,13 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(matCantileverTextBox, "300");
             SetupTextBox(matThicknessTextBox, "200");
 
-            SetupTextBox(pileRowsTextBox, "3");
-            SetupTextBox(pileColumnsTextBox, "3");
+            SetupTextBox(pileRowsTextBox, "2");
+            SetupTextBox(pileColumnsTextBox, "2");
             SetupTextBox(pileRowDistanceTextBox, "2000");
             SetupTextBox(pileColumnDistanceTextBox, "2000");
             SetupTextBox(pileLengthTextBox, "12000");
             SetupTextBox(pileDiameterTextBox, "600");
-            SetupTextBox(pileEmbeddedLengthTextBox, "2000");
+            SetupTextBox(pileEmbeddedLengthTextBox, "500");
 
             SetupTextBox(lamelarWidthTextBox, "400");
             SetupTextBox(lamelarThicknessTextBox, "300");
