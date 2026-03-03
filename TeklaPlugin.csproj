@@ -94,6 +94,8 @@
     <Compile Include="Services\Foundation\FoundationReinforcementService.cs" />
     <Compile Include="Services\Mat\Models\MatParameters.cs" />
     <Compile Include="Services\Piles\Models\PileParameters.cs" />
+    <Compile Include="Services\Piles\Models\PileReinforcementParameters.cs" />
+    <Compile Include="Services\Piles\PileReinforcementService.cs" />
     <Compile Include="Services\Elevation\Models\ElevationParameters.cs" />
     <Compile Include="Services\Cap\Models\CapParameters.cs" />
     <Compile Include="Services\Buffer\Models\BufferParameters.cs" />

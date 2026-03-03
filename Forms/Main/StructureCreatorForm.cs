@@ -53,6 +53,15 @@ namespace TeklaPlugin.Forms.Main
                        pileColumnDistanceTextBox, pileLengthTextBox, pileDiameterTextBox,
                        pileEmbeddedLengthTextBox;
 
+        // Pile Reinforcement Parameters
+        private CheckBox pileRebarEnableCheckBox;
+        private TextBox pileRebarCoverTextBox;
+        private TextBox pileRebarSpiralDiaTextBox, pileRebarSpiralPitchTextBox;
+        private TextBox pileRebarMainDiaTextBox, pileRebarBarsPerLayerTextBox,
+                       pileRebarSpacerDiaTextBox;
+        private CheckBox pileRebarCircStirrupEnableCheckBox;
+        private TextBox pileRebarCircStirrupDiaTextBox, pileRebarCircStirrupPitchTextBox;
+
         // Elevation Parameters
         private RadioButton lamelarRadioButton, circularRadioButton;
         private TextBox lamelarWidthTextBox, lamelarThicknessTextBox, lamelarHeightTextBox, lamelarNumberOfColumnsTextBox, lamelarDistanceTextBox, lamelarOffsetXTextBox, lamelarOffsetYTextBox;
@@ -1157,6 +1166,24 @@ namespace TeklaPlugin.Forms.Main
             return rebar;
         }
 
+        private TeklaPlugin.Services.Piles.Models.PileReinforcementParameters BuildPileReinforcementParams()
+        {
+            if (!pileRebarEnableCheckBox.Checked) return null;
+
+            return new TeklaPlugin.Services.Piles.Models.PileReinforcementParameters
+            {
+                Cover = ParseDouble(pileRebarCoverTextBox.Text, 50),
+                SpiralDiameter = ParseDouble(pileRebarSpiralDiaTextBox.Text, 12),
+                SpiralPitch = ParseDouble(pileRebarSpiralPitchTextBox.Text, 100),
+                MainBarDiameter = ParseDouble(pileRebarMainDiaTextBox.Text, 20),
+                BarsPerLayer = pileRebarBarsPerLayerTextBox.Text.Trim(),
+                SpacerDiameter = ParseDouble(pileRebarSpacerDiaTextBox.Text, 12),
+                CircStirrupEnabled = pileRebarCircStirrupEnableCheckBox.Checked,
+                CircStirrupDiameter = ParseDouble(pileRebarCircStirrupDiaTextBox.Text, 10),
+                CircStirrupPitch = ParseDouble(pileRebarCircStirrupPitchTextBox.Text, 200)
+            };
+        }
+
         private void AddTooltips()
         {
             var toolTip = new ToolTip();
@@ -1233,6 +1260,16 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(pileLengthTextBox, "12000");
             SetupTextBox(pileDiameterTextBox, "600");
             SetupTextBox(pileEmbeddedLengthTextBox, "500");
+
+            // Pile reinforcement defaults
+            SetupTextBox(pileRebarCoverTextBox, "50");
+            SetupTextBox(pileRebarSpiralDiaTextBox, "12");
+            SetupTextBox(pileRebarSpiralPitchTextBox, "100");
+            SetupTextBox(pileRebarMainDiaTextBox, "20");
+            SetupTextBox(pileRebarBarsPerLayerTextBox, "10");
+            SetupTextBox(pileRebarSpacerDiaTextBox, "12");
+            SetupTextBox(pileRebarCircStirrupDiaTextBox, "10");
+            SetupTextBox(pileRebarCircStirrupPitchTextBox, "200");
 
             SetupTextBox(lamelarWidthTextBox, "400");
             SetupTextBox(lamelarThicknessTextBox, "300");
@@ -1404,6 +1441,7 @@ namespace TeklaPlugin.Forms.Main
         private void CreatePilesTab()
         {
             TabPage tab = new TabPage("Piles");
+            tab.AutoScroll = true;
             tabControl.TabPages.Add(tab);
 
             int yPos = 20;
@@ -1426,6 +1464,93 @@ namespace TeklaPlugin.Forms.Main
             // Material & Class
             AddLabelAndComboBox(tab, "Material:", ref pilesMaterialComboBox, 20, yPos);
             AddLabelAndComboBox(tab, "Class:", ref pilesClassComboBox, 200, yPos);
+            yPos += 40;
+
+            // ── Reinforcement Section ──
+            Label rebarHeader = new Label();
+            rebarHeader.Text = "── Reinforcement ──";
+            rebarHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            rebarHeader.Location = new System.Drawing.Point(20, yPos);
+            rebarHeader.AutoSize = true;
+            tab.Controls.Add(rebarHeader);
+            yPos += 25;
+
+            // Enable reinforcement checkbox + Cover on same row
+            pileRebarEnableCheckBox = new CheckBox();
+            pileRebarEnableCheckBox.Text = "Enable Pile Reinforcement";
+            pileRebarEnableCheckBox.Location = new System.Drawing.Point(20, yPos);
+            pileRebarEnableCheckBox.AutoSize = true;
+            pileRebarEnableCheckBox.Font = new Font("Segoe UI", 9F);
+            pileRebarEnableCheckBox.Checked = false;
+            pileRebarEnableCheckBox.CheckedChanged += PileRebarEnable_Changed;
+            tab.Controls.Add(pileRebarEnableCheckBox);
+            AddLabelAndTextBox(tab, "Cover (mm):", ref pileRebarCoverTextBox, "50", 310, yPos);
+            yPos += 30;
+
+            // Spiral stirrup: Dia + Pitch
+            AddLabelAndTextBox(tab, "Spiral Dia (mm):", ref pileRebarSpiralDiaTextBox, "12", 20, yPos);
+            AddLabelAndTextBox(tab, "Spiral Pitch (mm):", ref pileRebarSpiralPitchTextBox, "100", 310, yPos);
+            yPos += 30;
+
+            // Main bars: Dia + Spacer
+            AddLabelAndTextBox(tab, "Main Bar Dia (mm):", ref pileRebarMainDiaTextBox, "20", 20, yPos);
+            AddLabelAndTextBox(tab, "Spacer Dia (mm):", ref pileRebarSpacerDiaTextBox, "12", 310, yPos);
+            yPos += 30;
+
+            // Bars per layer (csv) + hint
+            AddLabelAndTextBox(tab, "Bars/Layer (csv):", ref pileRebarBarsPerLayerTextBox, "20,20,10", 20, yPos);
+            Label barsHintLabel = new Label();
+            barsHintLabel.Text = "e.g. 20,20,10 = 3 layers";
+            barsHintLabel.Font = new Font("Segoe UI", 7F, FontStyle.Italic);
+            barsHintLabel.ForeColor = Color.Gray;
+            barsHintLabel.Location = new System.Drawing.Point(310, yPos + 3);
+            barsHintLabel.AutoSize = true;
+            barsHintLabel.Tag = "pileRebarControl";
+            tab.Controls.Add(barsHintLabel);
+            yPos += 30;
+
+            // Circular stirrup: checkbox + Dia + Pitch
+            pileRebarCircStirrupEnableCheckBox = new CheckBox();
+            pileRebarCircStirrupEnableCheckBox.Text = "Enable Circular Stirrup (inside layers)";
+            pileRebarCircStirrupEnableCheckBox.Location = new System.Drawing.Point(20, yPos);
+            pileRebarCircStirrupEnableCheckBox.AutoSize = true;
+            pileRebarCircStirrupEnableCheckBox.Font = new Font("Segoe UI", 9F);
+            pileRebarCircStirrupEnableCheckBox.Checked = false;
+            pileRebarCircStirrupEnableCheckBox.Tag = "pileRebarControl";
+            pileRebarCircStirrupEnableCheckBox.CheckedChanged += PileCircStirrupEnable_Changed;
+            tab.Controls.Add(pileRebarCircStirrupEnableCheckBox);
+            yPos += 28;
+            AddLabelAndTextBox(tab, "Stirrup Dia (mm):", ref pileRebarCircStirrupDiaTextBox, "10", 20, yPos);
+            AddLabelAndTextBox(tab, "Stirrup Pitch (mm):", ref pileRebarCircStirrupPitchTextBox, "200", 310, yPos);
+
+            // Set initial visibility of reinforcement controls
+            SetPileRebarControlsEnabled(false);
+        }
+
+        private void PileRebarEnable_Changed(object sender, EventArgs e)
+        {
+            SetPileRebarControlsEnabled(pileRebarEnableCheckBox.Checked);
+        }
+
+        private void PileCircStirrupEnable_Changed(object sender, EventArgs e)
+        {
+            bool on = pileRebarEnableCheckBox.Checked && pileRebarCircStirrupEnableCheckBox.Checked;
+            pileRebarCircStirrupDiaTextBox.Enabled = on;
+            pileRebarCircStirrupPitchTextBox.Enabled = on;
+        }
+
+        private void SetPileRebarControlsEnabled(bool enabled)
+        {
+            pileRebarCoverTextBox.Enabled = enabled;
+            pileRebarSpiralDiaTextBox.Enabled = enabled;
+            pileRebarSpiralPitchTextBox.Enabled = enabled;
+            pileRebarMainDiaTextBox.Enabled = enabled;
+            pileRebarBarsPerLayerTextBox.Enabled = enabled;
+            pileRebarSpacerDiaTextBox.Enabled = enabled;
+            pileRebarCircStirrupEnableCheckBox.Enabled = enabled;
+            bool stirrupOn = enabled && pileRebarCircStirrupEnableCheckBox.Checked;
+            pileRebarCircStirrupDiaTextBox.Enabled = stirrupOn;
+            pileRebarCircStirrupPitchTextBox.Enabled = stirrupOn;
         }
 
         private bool ValidateAllInputs()
@@ -1484,7 +1609,8 @@ namespace TeklaPlugin.Forms.Main
                     RowDistance = ParseDouble(pileRowDistanceTextBox.Text, 2000),
                     ColumnDistance = ParseDouble(pileColumnDistanceTextBox.Text, 2000),
                     Diameter = ParseDouble(pileDiameterTextBox.Text, 600),
-                    EmbeddedLength = ParseDouble(pileEmbeddedLengthTextBox.Text, 2000)
+                    EmbeddedLength = ParseDouble(pileEmbeddedLengthTextBox.Text, 2000),
+                    Reinforcement = BuildPileReinforcementParams()
                 };
 
                 var foundationParams = new TeklaPlugin.Services.Foundation.Models.FoundationParameters
@@ -1667,7 +1793,8 @@ namespace TeklaPlugin.Forms.Main
                     Diameter = double.Parse(pileDiameterTextBox.Text),
                     EmbeddedLength = double.Parse(pileEmbeddedLengthTextBox.Text),
                     Material = pilesMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
-                    Class = pilesClassComboBox.SelectedItem?.ToString() ?? "8"
+                    Class = pilesClassComboBox.SelectedItem?.ToString() ?? "8",
+                    Reinforcement = BuildPileReinforcementParams()
                 };
 
                 // Determine elevation type and collect parameters
