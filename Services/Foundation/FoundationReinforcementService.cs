@@ -23,6 +23,8 @@ namespace TeklaPlugin.Services.Foundation
     /// Face inset:
     ///   B1/T1 (outer) face inset by sideCover  → bars have end cover.
     ///   B2/T2 (inner) face inset by sideCover + outer dia → bars sit inside outer grid.
+    ///   
+    /// Hooks are handled via RebarEndDetailModifier (no extra leg faces needed).
     /// </summary>
     public class FoundationReinforcementService
     {
@@ -49,10 +51,10 @@ namespace TeklaPlugin.Services.Foundation
             }
 
             double hookLen = rebar.HookLength;
-            double sideCover = rebar.BottomCover; // side cover for hooks and lateral inset
+            double sideCover = rebar.BottomCover;
 
-            // B1/T1 = outer layers → face inset by sideCover (end cover from concrete edge)
-            // B2/T2 = inner layers → face inset by sideCover + outer layer dia (sits inside B1/T1)
+            // B1/T1 = outer layers → face inset by sideCover
+            // B2/T2 = inner layers → face inset by sideCover + outer layer dia
             double outerInset = sideCover;
             double bottomInnerInset = sideCover + rebar.B1.Diameter;
             double topInnerInset = sideCover + rebar.T1.Diameter;
@@ -84,10 +86,9 @@ namespace TeklaPlugin.Services.Foundation
         }
 
         // ────────────────────────────────────────────────────────────
-        //  Main layers  (B1, B2, T1, T2)  with optional hooks
+        //  Main layers  (B1, B2, T1, T2)  with hooks via EndDetailModifier
         // ────────────────────────────────────────────────────────────
 
-        /// <param name="faceInset">How much to shrink the face in both Y and Z from each edge.</param>
         private void CreateMainLayer(Solid solid, RebarLayer layer, double centerOffset,
             bool isTop, double a, string name, double hookLength, double faceInset)
         {
@@ -105,33 +106,9 @@ namespace TeklaPlugin.Services.Foundation
             rebarSet.RebarProperties.Class = 7;
             rebarSet.RebarProperties.Size = layer.Diameter.ToString();
 
-            bool hasHooks = hookLength > 0;
-
-            // Hook X extents
-            double hookHighX, hookLowX;
-            if (isTop)
-            {
-                hookHighX = minX + hookLength;
-                hookLowX = minX;
-            }
-            else
-            {
-                hookHighX = maxX;
-                hookLowX = maxX - hookLength;
-            }
-
-            int legOrder = 1;
-
-            // ── First hook face (offset=0: faceInset already provides side cover) ──
-            if (hasHooks)
-            {
-                rebarSet.LegFaces.Add(CreateHookFace(legOrder++, 0,
-                    hookHighX, hookLowX, layer.Direction, true, minY, maxY, minZ, maxZ));
-            }
-
-            // ── Main horizontal face ──
+            // ── Single main horizontal face ──
             var mainFace = new RebarLegFace();
-            mainFace.LayerOrderNumber = legOrder++;
+            mainFace.LayerOrderNumber = 1;
             mainFace.Reversed = false;
             mainFace.AdditonalOffset = centerOffset;
 
@@ -152,13 +129,6 @@ namespace TeklaPlugin.Services.Foundation
 
             rebarSet.LegFaces.Add(mainFace);
 
-            // ── Second hook face (offset=0: faceInset already provides side cover) ──
-            if (hasHooks)
-            {
-                rebarSet.LegFaces.Add(CreateHookFace(legOrder++, 0,
-                    hookHighX, hookLowX, layer.Direction, false, minY, maxY, minZ, maxZ));
-            }
-
             // ── Guideline (distribution direction) ──
             double faceX = isTop ? minX : maxX;
 
@@ -171,76 +141,72 @@ namespace TeklaPlugin.Services.Foundation
 
             if (layer.Direction == RebarDirection.Length)
             {
-                // Bars run Z → guideline spans Y (inset values already applied)
                 guideline.Curve.AddContourPoint(new ContourPoint(new Point(faceX, minY, minZ), null));
                 guideline.Curve.AddContourPoint(new ContourPoint(new Point(faceX, maxY, minZ), null));
             }
             else
             {
-                // Bars run Y → guideline spans Z (inset values already applied)
                 guideline.Curve.AddContourPoint(new ContourPoint(new Point(faceX, minY, minZ), null));
                 guideline.Curve.AddContourPoint(new ContourPoint(new Point(faceX, minY, maxZ), null));
             }
 
             rebarSet.Guidelines.Add(guideline);
             rebarSet.Insert();
+
+            // ── Hooks via RebarEndDetailModifier ──
+            if (hookLength > 0)
+            {
+                double bendRadius = 4 * layer.Diameter;
+
+                // Start-end hook (near minZ for Length bars, near minY for Width bars)
+                AddHookModifier(rebarSet, hookLength, bendRadius,
+                    layer.Direction, true, faceX, minY, maxY, minZ, maxZ);
+
+                // End-end hook (near maxZ for Length bars, near maxY for Width bars)
+                AddHookModifier(rebarSet, hookLength, bendRadius,
+                    layer.Direction, false, faceX, minY, maxY, minZ, maxZ);
+            }
         }
 
         /// <summary>
-        /// Creates a hook leg face on a side of the footing.
-        /// hookHighX / hookLowX define the X extent of the hook (highX > lowX).
-        /// minY/maxY/minZ/maxZ are already inset by faceInset.
+        /// Creates a RebarEndDetailModifier that adds a 90° hook to one end of the bars.
+        /// The modifier is positioned as a strip near the bar end so Tekla knows which end to hook.
         /// </summary>
-        private RebarLegFace CreateHookFace(int layerOrder, double sideCover,
-            double hookHighX, double hookLowX,
-            RebarDirection barDirection, bool isStartHook,
-            double minY, double maxY, double minZ, double maxZ)
+        private void AddHookModifier(RebarSet rebarSet, double hookLength, double bendRadius,
+            RebarDirection barDirection, bool isStartEnd,
+            double faceX, double minY, double maxY, double minZ, double maxZ)
         {
-            var face = new RebarLegFace();
-            face.LayerOrderNumber = layerOrder;
-            face.AdditonalOffset = sideCover;
-            face.Reversed = false;
+            var modifier = new RebarEndDetailModifier();
+            modifier.Father = rebarSet;
+            modifier.EndType = RebarEndDetailModifier.EndTypeEnum.HOOK;
+
+            modifier.RebarHook.Shape = RebarHookData.RebarHookShapeEnum.HOOK_90_DEGREES;
+            modifier.RebarHook.Angle = 90.0;
+            modifier.RebarHook.Radius = bendRadius;
+            modifier.RebarHook.Length = hookLength;
+
+            // Position the modifier as a line strip at the bar end
+            Point p1, p2;
 
             if (barDirection == RebarDirection.Length)
             {
-                if (isStartHook)
-                {
-                    // Z = MinZ, normal → +Z (inward)
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookHighX, minY, minZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookHighX, maxY, minZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookLowX, maxY, minZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookLowX, minY, minZ), null));
-                }
-                else
-                {
-                    // Z = MaxZ, normal → −Z (inward)
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookHighX, minY, maxZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookLowX, minY, maxZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookLowX, maxY, maxZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookHighX, maxY, maxZ), null));
-                }
+                // Bars run along Z; start end is near minZ, far end is near maxZ
+                double z = isStartEnd ? minZ : maxZ;
+                p1 = new Point(faceX, minY, z);
+                p2 = new Point(faceX, maxY, z);
             }
-            else // Width direction
+            else
             {
-                if (isStartHook)
-                {
-                    // Y = MinY, normal → +Y (inward)
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookHighX, minY, minZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookLowX, minY, minZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookLowX, minY, maxZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookHighX, minY, maxZ), null));
-                }
-                else
-                {
-                    // Y = MaxY, normal → −Y (inward)
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookHighX, maxY, minZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookHighX, maxY, maxZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookLowX, maxY, maxZ), null));
-                    face.Contour.AddContourPoint(new ContourPoint(new Point(hookLowX, maxY, minZ), null));
-                }
+                // Bars run along Y; start end is near minY, far end is near maxY
+                double y = isStartEnd ? minY : maxY;
+                p1 = new Point(faceX, y, minZ);
+                p2 = new Point(faceX, y, maxZ);
             }
 
-            return face;
+            modifier.Curve.AddContourPoint(new ContourPoint(p1, null));
+            modifier.Curve.AddContourPoint(new ContourPoint(p2, null));
+
+            modifier.Insert();
         }
 
         // ────────────────────────────────────────────────────────────
@@ -391,7 +357,13 @@ namespace TeklaPlugin.Services.Foundation
             int totalCount = orderedDiameters.Count;
             if (totalCount == 0) return;
 
-            double layerSpacing = freeSpace / (totalCount + 1);
+            // Stack tightly: each layer sits right above the previous (touching)
+            double totalStackHeight = 0;
+            for (int i = 0; i < totalCount; i++)
+                totalStackHeight += orderedDiameters[i];
+
+            double midX = (bottomLevel + topLevel) / 2.0;
+            double stackBottomX = midX + totalStackHeight / 2.0;
 
             for (int idx = 0; idx < totalCount; idx++)
             {
@@ -399,7 +371,10 @@ namespace TeklaPlugin.Services.Foundation
                 RebarDirection dir = orderedDirections[idx];
                 double spc = orderedSpacings[idx];
 
-                double xPos = bottomLevel - layerSpacing * (idx + 1);
+                double cumulative = 0;
+                for (int j = 0; j < idx; j++)
+                    cumulative += orderedDiameters[j];
+                double xPos = stackBottomX - cumulative - dia / 2.0;
 
                 RebarSet rebarSet = new RebarSet();
                 rebarSet.RebarProperties.Name = $"Foundation Int {dir}-{idx + 1}";
