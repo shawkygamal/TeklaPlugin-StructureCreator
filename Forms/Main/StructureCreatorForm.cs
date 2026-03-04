@@ -58,7 +58,7 @@ namespace TeklaPlugin.Forms.Main
         private TextBox pileRebarCoverTextBox;
         private TextBox pileRebarSpiralDiaTextBox, pileRebarSpiralPitchTextBox;
         private TextBox pileRebarMainDiaTextBox, pileRebarBarsPerLayerTextBox,
-                       pileRebarSpacerDiaTextBox;
+                       pileRebarSpacerDiaTextBox, pileRebarMainSpliceTextBox;
         private CheckBox pileRebarCircStirrupEnableCheckBox;
         private TextBox pileRebarCircStirrupDiaTextBox, pileRebarCircStirrupPitchTextBox;
 
@@ -1178,6 +1178,7 @@ namespace TeklaPlugin.Forms.Main
                 MainBarDiameter = ParseDouble(pileRebarMainDiaTextBox.Text, 20),
                 BarsPerLayer = pileRebarBarsPerLayerTextBox.Text.Trim(),
                 SpacerDiameter = ParseDouble(pileRebarSpacerDiaTextBox.Text, 12),
+                MainBarSpliceLength = ParseDouble(pileRebarMainSpliceTextBox.Text, 0),
                 CircStirrupEnabled = pileRebarCircStirrupEnableCheckBox.Checked,
                 CircStirrupDiameter = ParseDouble(pileRebarCircStirrupDiaTextBox.Text, 10),
                 CircStirrupPitch = ParseDouble(pileRebarCircStirrupPitchTextBox.Text, 200)
@@ -1268,6 +1269,7 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(pileRebarMainDiaTextBox, "20");
             SetupTextBox(pileRebarBarsPerLayerTextBox, "10");
             SetupTextBox(pileRebarSpacerDiaTextBox, "12");
+            SetupTextBox(pileRebarMainSpliceTextBox, "0");
             SetupTextBox(pileRebarCircStirrupDiaTextBox, "10");
             SetupTextBox(pileRebarCircStirrupPitchTextBox, "200");
 
@@ -1492,9 +1494,10 @@ namespace TeklaPlugin.Forms.Main
             AddLabelAndTextBox(tab, "Spiral Pitch (mm):", ref pileRebarSpiralPitchTextBox, "100", 310, yPos);
             yPos += 30;
 
-            // Main bars: Dia + Spacer
+            // Main bars: Dia + Spacer + Splice
             AddLabelAndTextBox(tab, "Main Bar Dia (mm):", ref pileRebarMainDiaTextBox, "20", 20, yPos);
-            AddLabelAndTextBox(tab, "Spacer Dia (mm):", ref pileRebarSpacerDiaTextBox, "12", 310, yPos);
+            AddLabelAndTextBox(tab, "Spacer Dia (mm):", ref pileRebarSpacerDiaTextBox, "12", 230, yPos);
+            AddLabelAndTextBox(tab, "Splice Len (mm):", ref pileRebarMainSpliceTextBox, "0", 440, yPos);
             yPos += 30;
 
             // Bars per layer (csv) + hint
@@ -1547,6 +1550,7 @@ namespace TeklaPlugin.Forms.Main
             pileRebarMainDiaTextBox.Enabled = enabled;
             pileRebarBarsPerLayerTextBox.Enabled = enabled;
             pileRebarSpacerDiaTextBox.Enabled = enabled;
+            pileRebarMainSpliceTextBox.Enabled = enabled;
             pileRebarCircStirrupEnableCheckBox.Enabled = enabled;
             bool stirrupOn = enabled && pileRebarCircStirrupEnableCheckBox.Checked;
             pileRebarCircStirrupDiaTextBox.Enabled = stirrupOn;

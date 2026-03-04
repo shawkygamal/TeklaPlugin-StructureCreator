@@ -26,6 +26,12 @@ namespace TeklaPlugin.Services.Piles.Models
         public double MainBarDiameter { get; set; } = 20;
 
         /// <summary>
+        /// Optional splice (lap) length for main bars along pile length (mm).
+        /// 0 = no splice (single full-length bar).
+        /// </summary>
+        public double MainBarSpliceLength { get; set; } = 0;
+
+        /// <summary>
         /// Comma-separated bar counts per layer (outside → inside).
         /// "20,20,10" → 3 layers with 20, 20, 10 bars.
         /// </summary>

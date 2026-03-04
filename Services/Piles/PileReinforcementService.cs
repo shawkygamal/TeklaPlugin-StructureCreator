@@ -52,7 +52,8 @@ namespace TeklaPlugin.Services.Piles
                                     - (k + 0.5) * p.MainBarDiameter
                                     - k * p.SpacerDiameter;
                     if (layerR <= 0) break;
-                    CreateMainBars(pile, p.MainBarDiameter, bars[k], layerR, minX, maxX, k);
+                    CreateMainBars(pile, p.MainBarDiameter, bars[k], layerR,
+                                   minX, maxX, k, p.MainBarSpliceLength);
                 }
 
                 // ── 3. Spacer hoops between adjacent layers ──
@@ -171,13 +172,17 @@ namespace TeklaPlugin.Services.Piles
 
         // ─────────────────────────────────────────────────────────────
         //  Longitudinal bars in concentric circular layers
+        //  Optional splice: if spliceLength > 0 and shorter than pile
+        //  length, each bar is split into two with an overlap.
         // ─────────────────────────────────────────────────────────────
         private void CreateMainBars(Beam pile, double barDia, int count,
-            double layerR, double minX, double maxX, int layerIdx)
+            double layerR, double minX, double maxX, int layerIdx, double spliceLength)
         {
             if (count <= 0) return;
 
             double da = 2.0 * Math.PI / count;
+            double totalLen = maxX - minX;
+            bool useSplice = spliceLength > 0 && spliceLength < totalLen;
 
             for (int i = 0; i < count; i++)
             {
@@ -185,19 +190,41 @@ namespace TeklaPlugin.Services.Piles
                 double y = layerR * Math.Cos(a);
                 double z = layerR * Math.Sin(a);
 
-                var bar = new SingleRebar();
-                bar.Father = pile;
-                bar.Name = $"Pile Main L{layerIdx + 1}";
-                bar.Grade = "Undefined";
-                bar.Size = barDia.ToString();
-                bar.Class = 7;
+                if (!useSplice)
+                {
+                    CreateMainBarSegment(pile, barDia, layerIdx, minX, maxX, y, z);
+                }
+                else
+                {
+                    double mid = (minX + maxX) / 2.0;
+                    double halfLap = spliceLength / 2.0;
 
-                var poly = new Polygon();
-                poly.Points.Add(new Point(minX, y, z));
-                poly.Points.Add(new Point(maxX, y, z));
-                bar.Polygon = poly;
-                bar.Insert();
+                    // Lower bar: full from bottom to mid + half lap
+                    CreateMainBarSegment(pile, barDia, layerIdx,
+                        minX, mid + halfLap, y, z);
+
+                    // Upper bar: from mid - half lap to top
+                    CreateMainBarSegment(pile, barDia, layerIdx,
+                        mid - halfLap, maxX, y, z);
+                }
             }
+        }
+
+        private void CreateMainBarSegment(Beam pile, double barDia, int layerIdx,
+            double xStart, double xEnd, double y, double z)
+        {
+            var bar = new SingleRebar();
+            bar.Father = pile;
+            bar.Name = $"Pile Main L{layerIdx + 1}";
+            bar.Grade = "Undefined";
+            bar.Size = barDia.ToString();
+            bar.Class = 7;
+
+            var poly = new Polygon();
+            poly.Points.Add(new Point(xStart, y, z));
+            poly.Points.Add(new Point(xEnd, y, z));
+            bar.Polygon = poly;
+            bar.Insert();
         }
     }
 }
