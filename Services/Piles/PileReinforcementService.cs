@@ -69,9 +69,15 @@ namespace TeklaPlugin.Services.Piles
                 // ── 4. Circular stirrup inside innermost layer ──
                 if (p.CircStirrupEnabled && n > 0)
                 {
-                    double circR = R - p.Cover - p.SpiralDiameter
-                                   - n * p.MainBarDiameter
-                                   - (n - 1) * p.SpacerDiameter;
+                    // Center of stirrup is inside the innermost main bars:
+                    // lastLayerR = R - Cover - SpiralDia - (n-0.5)*MainBarDia - (n-1)*SpacerDia
+                    // move in by MainBarDia/2 + CircStirrupDia/2
+                    double lastLayerR = R - p.Cover - p.SpiralDiameter
+                                        - (n - 0.5) * p.MainBarDiameter
+                                        - (n - 1) * p.SpacerDiameter;
+                    double circR = lastLayerR
+                                   - p.MainBarDiameter / 2.0
+                                   - p.CircStirrupDiameter / 2.0;
                     if (circR > 0)
                     {
                         CreateHoops(pile, circR, p.CircStirrupDiameter, p.CircStirrupPitch,
@@ -121,46 +127,46 @@ namespace TeklaPlugin.Services.Piles
         }
 
         // ─────────────────────────────────────────────────────────────
-        //  Individual circular hoops at regular spacing.
-        //  Each hoop = 1-turn helix with 50 mm advance so Tekla renders it.
+        //  Circular hoops via RebarGroup – defines the hoop shape once
+        //  and lets Tekla distribute copies along the pile axis.
         // ─────────────────────────────────────────────────────────────
         private void CreateHoops(Beam pile, double radius, double barDia,
             double spacing, double minX, double maxX, string name, int cls)
         {
             if (radius <= 0) return;
 
-            double length = maxX - minX;
-            int count = Math.Max(1, (int)Math.Floor(length / spacing));
-            double start = minX + (length - (count - 1) * spacing) / 2.0;
+            var group = new RebarGroup();
+            group.Father = pile;
+            group.Name = name;
+            group.Grade = "Undefined";
+            group.Size = barDia.ToString();
+            group.Class = cls;
 
-            for (int h = 0; h < count; h++)
+            // Circular polygon (closed ring in Y-Z plane)
+            var poly = new Polygon();
+            double da = 2.0 * Math.PI / Seg;
+            for (int i = 0; i <= Seg; i++)
             {
-                double xc = start + h * spacing;
-
-                var bar = new SingleRebar();
-                bar.Father = pile;
-                bar.Name = name;
-                bar.Grade = "Undefined";
-                bar.Size = barDia.ToString();
-                bar.Class = cls;
-
-                var poly = new Polygon();
-                double da = 2.0 * Math.PI / Seg;
-                double dx = 50.0 / Seg;              // ~1.4 mm per segment
-                double x0 = xc - 25.0;               // center hoop at xc
-
-                for (int i = 0; i <= Seg; i++)
-                {
-                    double a = i * da;
-                    poly.Points.Add(new Point(
-                        x0 + i * dx,
-                        radius * Math.Cos(a),
-                        radius * Math.Sin(a)));
-                }
-
-                bar.Polygon = poly;
-                bar.Insert();
+                double a = i * da;
+                poly.Points.Add(new Point(minX,
+                    radius * Math.Cos(a),
+                    radius * Math.Sin(a)));
             }
+            group.Polygons.Add(poly);
+
+            // Bend radii at each polygon corner
+            for (int i = 0; i < Seg; i++)
+                group.RadiusValues.Add(0.0);
+
+            // Distribution along pile axis (X in local coords)
+            group.StartPoint = new Point(minX, 0, 0);
+            group.EndPoint = new Point(maxX, 0, 0);
+
+            // Spacing
+            group.Spacings.Add(spacing);
+            group.SpacingType = RebarGroup.RebarGroupSpacingTypeEnum.SPACING_TYPE_TARGET_SPACE;
+
+            group.Insert();
         }
 
         // ─────────────────────────────────────────────────────────────
