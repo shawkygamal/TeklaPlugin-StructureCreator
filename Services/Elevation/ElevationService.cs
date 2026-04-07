@@ -10,10 +10,12 @@ namespace TeklaPlugin.Services.Elevation
     public class ElevationService
     {
         private readonly Model _model;
+        private readonly ColumnReinforcementService _rebarService;
 
         public ElevationService(Model model)
         {
             _model = model;
+            _rebarService = new ColumnReinforcementService(model);
         }
 
         public void CreateElevationLamelar(TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.LamelarElevationParameters lamelar)
@@ -43,6 +45,12 @@ namespace TeklaPlugin.Services.Elevation
                 elevationLamelar.Name = $"Elevation_Lamelar_{i}";
 
                 elevationLamelar.Insert();
+
+                // Create reinforcement if parameters are provided
+                if (lamelar.Reinforcement != null)
+                {
+                    _rebarService.CreateRectangularReinforcement(elevationLamelar, lamelar.Width, lamelar.Thickness, lamelar.Reinforcement);
+                }
             }
         }
 
@@ -73,6 +81,12 @@ namespace TeklaPlugin.Services.Elevation
                 elevationCircular.Name = $"Elevation_{i}";
 
                 elevationCircular.Insert();
+
+                // Create reinforcement if parameters are provided
+                if (circular.Reinforcement != null)
+                {
+                    _rebarService.CreateCircularReinforcement(elevationCircular, circular.Diameter, circular.Reinforcement);
+                }
             }
         }
     }
