@@ -19,6 +19,9 @@ using TeklaPlugin.Services.Mat.Models;
 using TeklaPlugin.Services.Piles.Models;
 using TeklaPlugin.Services.Elevation.Models;
 using TeklaPlugin.Services.Cap.Models;
+using ColumnReinforcementParameters = TeklaPlugin.Services.Elevation.Models.ColumnReinforcementParameters;
+using InternalStirrupShape = TeklaPlugin.Services.Elevation.Models.InternalStirrupShape;
+using TeklaPlugin.Services.Buffer.Models;
 using TeklaPlugin.TeklaQueries;
 
 namespace TeklaPlugin.Forms.Main
@@ -34,6 +37,16 @@ namespace TeklaPlugin.Forms.Main
         // Foundation Parameters
         private TextBox foundationWidthTextBox, foundationLengthTextBox, foundationHeightTextBox;
 
+        // Foundation Reinforcement Parameters
+        private TextBox rebarT1DiaTextBox, rebarT2DiaTextBox, rebarB1DiaTextBox, rebarB2DiaTextBox;
+        private TextBox rebarT1SpacingTextBox, rebarT2SpacingTextBox, rebarB1SpacingTextBox, rebarB2SpacingTextBox;
+        private ComboBox rebarT1DirCombo, rebarT2DirCombo, rebarB1DirCombo, rebarB2DirCombo;
+        private TextBox rebarTopCoverTextBox, rebarBottomCoverTextBox;
+        private TextBox rebarHookLengthTextBox;
+        private TextBox rebarSideDiaTextBox, rebarSideSpacingTextBox;
+        private TextBox rebarIntWidthDiaTextBox, rebarIntWidthLayersTextBox, rebarIntWidthSpacingTextBox;
+        private TextBox rebarIntLengthDiaTextBox, rebarIntLengthLayersTextBox, rebarIntLengthSpacingTextBox;
+
         // Mat Parameters
         private TextBox matCantileverTextBox, matThicknessTextBox;
 
@@ -42,14 +55,43 @@ namespace TeklaPlugin.Forms.Main
                        pileColumnDistanceTextBox, pileLengthTextBox, pileDiameterTextBox,
                        pileEmbeddedLengthTextBox;
 
+        // Pile Reinforcement Parameters
+        private CheckBox pileRebarEnableCheckBox;
+        private TextBox pileRebarCoverTextBox;
+        private TextBox pileRebarSpiralDiaTextBox, pileRebarSpiralPitchTextBox;
+        private TextBox pileRebarMainDiaTextBox, pileRebarBarsPerLayerTextBox,
+                       pileRebarSpacerDiaTextBox, pileRebarMainSpliceTextBox;
+        private CheckBox pileRebarCircStirrupEnableCheckBox;
+        private TextBox pileRebarCircStirrupDiaTextBox, pileRebarCircStirrupPitchTextBox;
+
         // Elevation Parameters
         private RadioButton lamelarRadioButton, circularRadioButton;
         private TextBox lamelarWidthTextBox, lamelarThicknessTextBox, lamelarHeightTextBox, lamelarNumberOfColumnsTextBox, lamelarDistanceTextBox, lamelarOffsetXTextBox, lamelarOffsetYTextBox;
         private TextBox circularDiameterTextBox, circularHeightTextBox, circularColumnsTextBox,
                        circularDistanceTextBox, circularOffsetXTextBox, circularOffsetYTextBox;
 
+        // Column Reinforcement Parameters
+        private CheckBox colRebarEnableCheckBox;
+        private TextBox colRebarCoverTextBox, colRebarMainDiaTextBox, colRebarBarsPerLayerTextBox;
+        private TextBox colRebarLayerSpacingTextBox, colRebarSpacerDiaTextBox, colRebarMainSpliceTextBox;
+        private CheckBox colRebarExtStirrupEnableCheckBox;
+        private TextBox colRebarExtStirrupDiaTextBox, colRebarExtStirrupSpacingTextBox;
+        private CheckBox colRebarSeismicHooksCheckBox;
+        private TextBox colRebarHookLengthTextBox;
+        private CheckBox colRebarIntStirrupEnableCheckBox;
+        private TextBox colRebarIntStirrupDiaTextBox, colRebarIntStirrupSpacingTextBox;
+        private ComboBox colRebarIntShapeComboBox;
+
         // Cap Parameters
-        private TextBox capTopLengthTextBox, capBottomLengthTextBox, capHeightTextBox, capWidthTextBox, capPTextBox;
+        private TextBox capTopLengthTextBox, capBottomLengthTextBox, capWidthTextBox, capDepthTextBox, capHeightDiffTextBox, capPTextBox;
+        private TextBox capCutXTextBox, capCutYTextBox, capFTextBox;
+        private TextBox capD1TextBox, capD2TextBox, capD3TextBox, capD4TextBox;
+        private ComboBox capCutSideComboBox;
+
+        // Buffer Parameters
+        private TextBox bufferNumberTextBox, bufferSpacingTextBox, bufferLeftOffsetTextBox,
+                       bufferRightOffsetTextBox, bufferWidthTextBox, bufferBreadthTextBox, bufferHeightsTextBox;
+        private ComboBox bufferMaterialComboBox, bufferClassComboBox;
 
         // Material Dropdowns
         private ComboBox foundationMaterialComboBox, matMaterialComboBox, pilesMaterialComboBox,
@@ -127,6 +169,7 @@ namespace TeklaPlugin.Forms.Main
             CreatePilesTab();
             CreateElevationTab();
             CreateCapTab();
+            CreateBufferTab();
 
             // Create button
             createStructureButton = new Button();
@@ -171,6 +214,7 @@ namespace TeklaPlugin.Forms.Main
         private void CreateElevationTab()
         {
             TabPage tab = new TabPage("Elevation");
+            tab.AutoScroll = true;
             tabControl.TabPages.Add(tab);
 
             int yPos = 20;
@@ -227,6 +271,150 @@ namespace TeklaPlugin.Forms.Main
             AddLabelAndComboBox(tab, "Circular Class:", ref circularClassComboBox, 200, yPos);
             circularMaterialComboBox.Visible = false;
             circularClassComboBox.Visible = false;
+
+            // ── Column Reinforcement Section ──
+            yPos += 45;
+            Label colRebarHeader = new Label();
+            colRebarHeader.Text = "── Column Reinforcement ──";
+            colRebarHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            colRebarHeader.Location = new System.Drawing.Point(20, yPos);
+            colRebarHeader.AutoSize = true;
+            tab.Controls.Add(colRebarHeader);
+            yPos += 25;
+
+            // Enable reinforcement checkbox + Cover
+            colRebarEnableCheckBox = new CheckBox();
+            colRebarEnableCheckBox.Text = "Enable Column Reinforcement";
+            colRebarEnableCheckBox.Location = new System.Drawing.Point(20, yPos);
+            colRebarEnableCheckBox.AutoSize = true;
+            colRebarEnableCheckBox.Font = new Font("Segoe UI", 9F);
+            colRebarEnableCheckBox.Checked = false;
+            colRebarEnableCheckBox.CheckedChanged += ColRebarEnable_Changed;
+            tab.Controls.Add(colRebarEnableCheckBox);
+            AddLabelAndTextBox(tab, "Cover (mm):", ref colRebarCoverTextBox, "40", 310, yPos);
+            yPos += 30;
+
+            // Main bars: Dia + Bars per layer
+            AddLabelAndTextBox(tab, "Main Bar Dia (mm):", ref colRebarMainDiaTextBox, "16", 20, yPos);
+            AddLabelAndTextBox(tab, "Bars/Layer (csv):", ref colRebarBarsPerLayerTextBox, "8", 310, yPos);
+            yPos += 30;
+
+            // Layer spacing + Spacer + Splice
+            AddLabelAndTextBox(tab, "Layer Spacing (mm):", ref colRebarLayerSpacingTextBox, "50", 20, yPos);
+            AddLabelAndTextBox(tab, "Spacer Dia (mm):", ref colRebarSpacerDiaTextBox, "10", 310, yPos);
+            yPos += 30;
+            AddLabelAndTextBox(tab, "Splice Len (mm):", ref colRebarMainSpliceTextBox, "0", 20, yPos);
+            yPos += 30;
+
+            // External stirrups
+            colRebarExtStirrupEnableCheckBox = new CheckBox();
+            colRebarExtStirrupEnableCheckBox.Text = "Enable External Stirrups";
+            colRebarExtStirrupEnableCheckBox.Location = new System.Drawing.Point(20, yPos);
+            colRebarExtStirrupEnableCheckBox.AutoSize = true;
+            colRebarExtStirrupEnableCheckBox.Font = new Font("Segoe UI", 9F);
+            colRebarExtStirrupEnableCheckBox.Checked = true;
+            colRebarExtStirrupEnableCheckBox.Tag = "colRebarControl";
+            colRebarExtStirrupEnableCheckBox.CheckedChanged += ColRebarExtStirrupEnable_Changed;
+            tab.Controls.Add(colRebarExtStirrupEnableCheckBox);
+            yPos += 28;
+            AddLabelAndTextBox(tab, "Ext Stirrup Dia (mm):", ref colRebarExtStirrupDiaTextBox, "10", 20, yPos);
+            AddLabelAndTextBox(tab, "Ext Stirrup Spc (mm):", ref colRebarExtStirrupSpacingTextBox, "150", 310, yPos);
+            yPos += 30;
+
+            // Seismic hooks (for rectangular columns)
+            colRebarSeismicHooksCheckBox = new CheckBox();
+            colRebarSeismicHooksCheckBox.Text = "Include Seismic Hooks (135°)";
+            colRebarSeismicHooksCheckBox.Location = new System.Drawing.Point(20, yPos);
+            colRebarSeismicHooksCheckBox.AutoSize = true;
+            colRebarSeismicHooksCheckBox.Font = new Font("Segoe UI", 9F);
+            colRebarSeismicHooksCheckBox.Checked = true;
+            colRebarSeismicHooksCheckBox.Tag = "colRebarControl";
+            tab.Controls.Add(colRebarSeismicHooksCheckBox);
+            AddLabelAndTextBox(tab, "Hook Length (mm):", ref colRebarHookLengthTextBox, "0", 310, yPos);
+            colRebarHookLengthTextBox.Tag = "colRebarControl";
+            yPos += 30;
+
+            // Internal stirrups
+            colRebarIntStirrupEnableCheckBox = new CheckBox();
+            colRebarIntStirrupEnableCheckBox.Text = "Enable Internal Stirrups";
+            colRebarIntStirrupEnableCheckBox.Location = new System.Drawing.Point(20, yPos);
+            colRebarIntStirrupEnableCheckBox.AutoSize = true;
+            colRebarIntStirrupEnableCheckBox.Font = new Font("Segoe UI", 9F);
+            colRebarIntStirrupEnableCheckBox.Checked = false;
+            colRebarIntStirrupEnableCheckBox.Tag = "colRebarControl";
+            colRebarIntStirrupEnableCheckBox.CheckedChanged += ColRebarIntStirrupEnable_Changed;
+            tab.Controls.Add(colRebarIntStirrupEnableCheckBox);
+            yPos += 28;
+            AddLabelAndTextBox(tab, "Int Stirrup Dia (mm):", ref colRebarIntStirrupDiaTextBox, "8", 20, yPos);
+            AddLabelAndTextBox(tab, "Int Stirrup Spc (mm):", ref colRebarIntStirrupSpacingTextBox, "300", 310, yPos);
+            yPos += 30;
+
+            // Internal stirrup shape (for rectangular columns)
+            Label intShapeLabel = new Label();
+            intShapeLabel.Text = "Internal Shape:";
+            intShapeLabel.Location = new System.Drawing.Point(20, yPos);
+            intShapeLabel.Size = new Size(150, 20);
+            intShapeLabel.Font = new Font("Segoe UI", 9F);
+            intShapeLabel.Tag = "colRebarControl";
+            tab.Controls.Add(intShapeLabel);
+
+            colRebarIntShapeComboBox = new ComboBox();
+            colRebarIntShapeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            colRebarIntShapeComboBox.Items.AddRange(new object[] { "Rectangular", "Diamond", "Cross", "Circular" });
+            colRebarIntShapeComboBox.SelectedItem = "Rectangular";
+            colRebarIntShapeComboBox.Location = new System.Drawing.Point(180, yPos);
+            colRebarIntShapeComboBox.Size = new Size(120, 23);
+            colRebarIntShapeComboBox.Font = new Font("Segoe UI", 9F);
+            colRebarIntShapeComboBox.Tag = "colRebarControl";
+            tab.Controls.Add(colRebarIntShapeComboBox);
+
+            // Set initial visibility of reinforcement controls
+            SetColRebarControlsEnabled(false);
+        }
+
+        private void ColRebarEnable_Changed(object sender, EventArgs e)
+        {
+            SetColRebarControlsEnabled(colRebarEnableCheckBox.Checked);
+        }
+
+        private void ColRebarExtStirrupEnable_Changed(object sender, EventArgs e)
+        {
+            bool on = colRebarEnableCheckBox.Checked && colRebarExtStirrupEnableCheckBox.Checked;
+            colRebarExtStirrupDiaTextBox.Enabled = on;
+            colRebarExtStirrupSpacingTextBox.Enabled = on;
+            colRebarSeismicHooksCheckBox.Enabled = on;
+            colRebarHookLengthTextBox.Enabled = on;
+        }
+
+        private void ColRebarIntStirrupEnable_Changed(object sender, EventArgs e)
+        {
+            bool on = colRebarEnableCheckBox.Checked && colRebarIntStirrupEnableCheckBox.Checked;
+            colRebarIntStirrupDiaTextBox.Enabled = on;
+            colRebarIntStirrupSpacingTextBox.Enabled = on;
+            colRebarIntShapeComboBox.Enabled = on;
+        }
+
+        private void SetColRebarControlsEnabled(bool enabled)
+        {
+            colRebarCoverTextBox.Enabled = enabled;
+            colRebarMainDiaTextBox.Enabled = enabled;
+            colRebarBarsPerLayerTextBox.Enabled = enabled;
+            colRebarLayerSpacingTextBox.Enabled = enabled;
+            colRebarSpacerDiaTextBox.Enabled = enabled;
+            colRebarMainSpliceTextBox.Enabled = enabled;
+            colRebarExtStirrupEnableCheckBox.Enabled = enabled;
+            colRebarSeismicHooksCheckBox.Enabled = enabled && colRebarExtStirrupEnableCheckBox.Checked;
+            colRebarIntStirrupEnableCheckBox.Enabled = enabled;
+
+            bool extOn = enabled && colRebarExtStirrupEnableCheckBox.Checked;
+            colRebarExtStirrupDiaTextBox.Enabled = extOn;
+            colRebarExtStirrupSpacingTextBox.Enabled = extOn;
+            colRebarHookLengthTextBox.Enabled = extOn;
+
+            bool intOn = enabled && colRebarIntStirrupEnableCheckBox.Checked;
+            colRebarIntStirrupDiaTextBox.Enabled = intOn;
+            colRebarIntStirrupSpacingTextBox.Enabled = intOn;
+            colRebarIntShapeComboBox.Enabled = intOn;
         }
 
         private void CreateCapTab()
@@ -241,16 +429,74 @@ namespace TeklaPlugin.Forms.Main
             yPos += 35;
             AddLabelAndTextBox(tab, "Bottom Length - mm:", ref capBottomLengthTextBox, "2000", 20, yPos);
             yPos += 35;
-            AddLabelAndTextBox(tab, "Height - mm:", ref capHeightTextBox, "500", 20, yPos);
-            yPos += 35;
             AddLabelAndTextBox(tab, "Width - mm:", ref capWidthTextBox, "600", 20, yPos);
             yPos += 35;
+            AddLabelAndTextBox(tab, "Depth - mm:", ref capDepthTextBox, "500", 20, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Height Diff (slope) - mm:", ref capHeightDiffTextBox, "300", 20, yPos);
+            AddLabelAndTextBox(tab, "F (width taper) - mm:", ref capFTextBox, "0", 310, yPos);
+            yPos += 35;
             AddLabelAndTextBox(tab, "P (Offset from Center) - mm:", ref capPTextBox, "0", 20, yPos);
+            yPos += 35;
+
+            // Cross-section L-cut (0 = no cut)
+            AddLabelAndTextBox(tab, "Cut X (width) - mm:", ref capCutXTextBox, "0", 20, yPos);
+            AddLabelAndTextBox(tab, "Cut Y (height) - mm:", ref capCutYTextBox, "0", 310, yPos);
+            yPos += 35;
+
+            // Cut side selector
+            Label cutSideLabel = new Label();
+            cutSideLabel.Text = "Cut Side:";
+            cutSideLabel.Location = new System.Drawing.Point(20, yPos);
+            cutSideLabel.Size = new Size(150, 20);
+            cutSideLabel.Font = new Font("Segoe UI", 9F);
+            tab.Controls.Add(cutSideLabel);
+
+            capCutSideComboBox = new ComboBox();
+            capCutSideComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            capCutSideComboBox.Items.AddRange(new object[] { "Right", "Left" });
+            capCutSideComboBox.SelectedItem = "Right";
+            capCutSideComboBox.Location = new System.Drawing.Point(180, yPos);
+            capCutSideComboBox.Size = new Size(120, 23);
+            capCutSideComboBox.Font = new Font("Segoe UI", 9F);
+            tab.Controls.Add(capCutSideComboBox);
+            yPos += 35;
+
+            // Plan taper (D1-D4, all 0 = rectangular plan, >0 = trapezoidal plan)
+            AddLabelAndTextBox(tab, "D1 (left top) - mm:", ref capD1TextBox, "0", 20, yPos);
+            AddLabelAndTextBox(tab, "D2 (left bot) - mm:", ref capD2TextBox, "0", 310, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "D3 (right top) - mm:", ref capD3TextBox, "0", 20, yPos);
+            AddLabelAndTextBox(tab, "D4 (right bot) - mm:", ref capD4TextBox, "0", 310, yPos);
             yPos += 35;
 
             // Material & Class
             AddLabelAndComboBox(tab, "Material:", ref capMaterialComboBox, 20, yPos);
             AddLabelAndComboBox(tab, "Class:", ref capClassComboBox, 200, yPos);
+        }
+
+        private void CreateBufferTab()
+        {
+            TabPage tab = new TabPage("Buffer");
+            tabControl.TabPages.Add(tab);
+
+            int yPos = 20;
+
+            AddLabelAndTextBox(tab, "Number of Buffers:", ref bufferNumberTextBox, "3", 20, yPos);
+            AddLabelAndTextBox(tab, "Spacing (S) - mm:", ref bufferSpacingTextBox, "500", 310, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Left Offset - mm:", ref bufferLeftOffsetTextBox, "200", 20, yPos);
+            AddLabelAndTextBox(tab, "Right Offset - mm:", ref bufferRightOffsetTextBox, "200", 310, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Width (W) - mm:", ref bufferWidthTextBox, "400", 20, yPos);
+            AddLabelAndTextBox(tab, "Breadth (B) - mm:", ref bufferBreadthTextBox, "300", 310, yPos);
+            yPos += 35;
+            AddLabelAndTextBox(tab, "Heights (comma sep) - mm:", ref bufferHeightsTextBox, "50,50,50", 20, yPos);
+            yPos += 35;
+
+            // Material & Class
+            AddLabelAndComboBox(tab, "Material:", ref bufferMaterialComboBox, 20, yPos);
+            AddLabelAndComboBox(tab, "Class:", ref bufferClassComboBox, 200, yPos);
         }
 
         private void LoadMaterials()
@@ -272,6 +518,7 @@ namespace TeklaPlugin.Forms.Main
                 lamelarMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
                 circularMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
                 capMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
+                bufferMaterialComboBox.Items.AddRange(concreteMaterials.ToArray());
 
                 // Populate class dropdowns
                 var commonClasses = new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" };
@@ -281,6 +528,7 @@ namespace TeklaPlugin.Forms.Main
                 lamelarClassComboBox.Items.AddRange(commonClasses);
                 circularClassComboBox.Items.AddRange(commonClasses);
                 capClassComboBox.Items.AddRange(commonClasses);
+                bufferClassComboBox.Items.AddRange(commonClasses);
 
                 // Set default selections
                 foundationMaterialComboBox.SelectedItem = "C50/60";
@@ -295,6 +543,8 @@ namespace TeklaPlugin.Forms.Main
                 circularClassComboBox.SelectedItem = "8";
                 capMaterialComboBox.SelectedItem = "C12/15";
                 capClassComboBox.SelectedItem = "8";
+                bufferMaterialComboBox.SelectedItem = "C12/15";
+                bufferClassComboBox.SelectedItem = "8";
             }
             catch (Exception ex)
             {
@@ -922,51 +1172,64 @@ namespace TeklaPlugin.Forms.Main
             // Draw column outline below cap
             int columnWidth = 20;
             int columnHeight = 60;
-            g.FillRectangle(columnBrush, centerX - columnWidth/2, centerY + 10, columnWidth, columnHeight);
-            g.DrawRectangle(new Pen(Color.Black, 1), centerX - columnWidth/2, centerY + 10, columnWidth, columnHeight);
-            g.DrawString("Column", new Font("Segoe UI", 7), Brushes.Black, centerX - 15, centerY + 75);
+            int capBottom = centerY + 10;
+            g.FillRectangle(columnBrush, centerX - columnWidth / 2, capBottom, columnWidth, columnHeight);
+            g.DrawRectangle(new Pen(Color.Black, 1), centerX - columnWidth / 2, capBottom, columnWidth, columnHeight);
+            g.DrawString("Column", new Font("Segoe UI", 7), Brushes.Black, centerX - 15, capBottom + columnHeight + 5);
 
-            // Draw cap as trapezoid above column (showing slope)
+            // New shape: rectangular top + sloped bottom
+            int topHalf = 60;   // half of top length (drawing scale)
+            int botHalf = 30;   // half of bottom length (drawing scale)
+            int depthH = 20;    // depth of rectangular portion
+            int slopeH = 15;    // height diff (slope portion)
+
+            int capTop = capBottom - depthH - slopeH;
+
+            // Shape: top-left, top-right, depth-right, slope-bottom-right, slope-bottom-left, depth-left
             System.Drawing.Point[] capShape = {
-                new System.Drawing.Point(centerX - 60, centerY - 10),  // Bottom left
-                new System.Drawing.Point(centerX - 50, centerY - 20),  // Top left
-                new System.Drawing.Point(centerX + 50, centerY - 20),  // Top right
-                new System.Drawing.Point(centerX + 60, centerY - 10)   // Bottom right
+                new System.Drawing.Point(centerX - topHalf, capTop),                      // Top left
+                new System.Drawing.Point(centerX + topHalf, capTop),                      // Top right
+                new System.Drawing.Point(centerX + topHalf, capTop + depthH),             // Depth right
+                new System.Drawing.Point(centerX + botHalf, capTop + depthH + slopeH),    // Bottom right (slope end)
+                new System.Drawing.Point(centerX - botHalf, capTop + depthH + slopeH),    // Bottom left (slope end)
+                new System.Drawing.Point(centerX - topHalf, capTop + depthH)               // Depth left
             };
 
             g.FillPolygon(capBrush, capShape);
             g.DrawPolygon(outlinePen, capShape);
 
             // Add dimensions
-            // Height (H)
-            g.DrawLine(dimensionPen, centerX - 70, centerY - 10, centerX - 70, centerY + 10);
-            g.DrawLine(dimensionPen, centerX - 75, centerY - 10, centerX - 65, centerY - 10);
-            g.DrawLine(dimensionPen, centerX - 75, centerY + 10, centerX - 65, centerY + 10);
-            // Rotate and draw "H (Height)" text vertically
-            System.Drawing.Drawing2D.Matrix matrix = g.Transform;
-            g.RotateTransform(-90);
-            g.DrawString("H (Height)", paramFont, Brushes.Orange, -(centerY), centerX - 80);
-            g.Transform = matrix;
+            // Top Length
+            g.DrawLine(dimensionPen, centerX - topHalf, capTop - 10, centerX + topHalf, capTop - 10);
+            g.DrawLine(dimensionPen, centerX - topHalf, capTop - 15, centerX - topHalf, capTop - 5);
+            g.DrawLine(dimensionPen, centerX + topHalf, capTop - 15, centerX + topHalf, capTop - 5);
+            g.DrawString("Top Length", paramFont, Brushes.Orange, centerX - 25, capTop - 22);
 
-            // Top Width (B)
-            g.DrawLine(dimensionPen, centerX - 50, centerY - 25, centerX + 50, centerY - 25);
-            g.DrawLine(dimensionPen, centerX - 50, centerY - 30, centerX - 50, centerY - 20);
-            g.DrawLine(dimensionPen, centerX + 50, centerY - 30, centerX + 50, centerY - 20);
-            g.DrawString("B (Top Width)", paramFont, Brushes.Orange, centerX - 35, centerY - 35);
+            // Bottom Length
+            int botY = capTop + depthH + slopeH;
+            g.DrawLine(dimensionPen, centerX - botHalf, botY + 5, centerX + botHalf, botY + 5);
+            g.DrawLine(dimensionPen, centerX - botHalf, botY, centerX - botHalf, botY + 10);
+            g.DrawLine(dimensionPen, centerX + botHalf, botY, centerX + botHalf, botY + 10);
+            g.DrawString("Bottom Length", paramFont, Brushes.Orange, centerX - 30, botY + 8);
 
-            // Bottom Width
-            g.DrawLine(dimensionPen, centerX - 60, centerY - 5, centerX + 60, centerY - 5);
-            g.DrawLine(dimensionPen, centerX - 60, centerY - 10, centerX - 60, centerY);
-            g.DrawLine(dimensionPen, centerX + 60, centerY - 10, centerX + 60, centerY);
-            g.DrawString("Bottom Width", paramFont, Brushes.Orange, centerX - 35, centerY + 5);
+            // Depth (right side)
+            int dimX = centerX + topHalf + 10;
+            g.DrawLine(dimensionPen, dimX, capTop, dimX, capTop + depthH);
+            g.DrawLine(dimensionPen, dimX - 5, capTop, dimX + 5, capTop);
+            g.DrawLine(dimensionPen, dimX - 5, capTop + depthH, dimX + 5, capTop + depthH);
+            g.DrawString("Depth", paramFont, Brushes.Red, dimX + 8, capTop + depthH / 2 - 5);
+
+            // Height Diff (right side, below depth)
+            g.DrawLine(dimensionPen, dimX, capTop + depthH, dimX, botY);
+            g.DrawLine(dimensionPen, dimX - 5, botY, dimX + 5, botY);
+            g.DrawString("Height Diff", paramFont, Brushes.Red, dimX + 8, capTop + depthH + slopeH / 2 - 5);
 
             // Slope indicator
-            g.DrawLine(new Pen(Color.Red, 1), centerX - 60, centerY - 10, centerX - 50, centerY - 20);
-            g.DrawLine(new Pen(Color.Red, 1), centerX + 60, centerY - 10, centerX + 50, centerY - 20);
-            g.DrawString("Slope", new Font("Segoe UI", 6), Brushes.Red, centerX + 25, centerY - 15);
+            g.DrawLine(new Pen(Color.Red, 1), centerX - topHalf, capTop + depthH, centerX - botHalf, botY);
+            g.DrawLine(new Pen(Color.Red, 1), centerX + topHalf, capTop + depthH, centerX + botHalf, botY);
 
             g.DrawString("Cap Beam", new Font("Segoe UI", 9, FontStyle.Bold), Brushes.Black, 20, height - 40);
-            g.DrawString("Above Column with Dimensions", labelFont, Brushes.Gray, 20, height - 25);
+            g.DrawString("Rect top + Sloped bottom", labelFont, Brushes.Gray, 20, height - 25);
         }
 
         private void DrawDimensionLines(Graphics g, int width, int height, double scale, int centerX, float groundY)
@@ -986,6 +1249,131 @@ namespace TeklaPlugin.Forms.Main
         {
             if (string.IsNullOrWhiteSpace(text)) return defaultValue;
             return double.TryParse(text, out double result) ? result : defaultValue;
+        }
+
+        private TeklaPlugin.Services.Foundation.Models.RebarDirection ParseDirection(ComboBox combo)
+        {
+            string val = combo.SelectedItem?.ToString() ?? "Length";
+            return val == "Width"
+                ? TeklaPlugin.Services.Foundation.Models.RebarDirection.Width
+                : TeklaPlugin.Services.Foundation.Models.RebarDirection.Length;
+        }
+
+        private TeklaPlugin.Services.Foundation.Models.FoundationReinforcementParameters BuildReinforcementParams()
+        {
+            var rebar = new TeklaPlugin.Services.Foundation.Models.FoundationReinforcementParameters
+            {
+                T1 = new TeklaPlugin.Services.Foundation.Models.RebarLayer
+                {
+                    Diameter = ParseDouble(rebarT1DiaTextBox.Text, 25),
+                    Direction = ParseDirection(rebarT1DirCombo),
+                    Spacing = ParseDouble(rebarT1SpacingTextBox.Text, 200)
+                },
+                T2 = new TeklaPlugin.Services.Foundation.Models.RebarLayer
+                {
+                    Diameter = ParseDouble(rebarT2DiaTextBox.Text, 25),
+                    Direction = ParseDirection(rebarT2DirCombo),
+                    Spacing = ParseDouble(rebarT2SpacingTextBox.Text, 200)
+                },
+                B1 = new TeklaPlugin.Services.Foundation.Models.RebarLayer
+                {
+                    Diameter = ParseDouble(rebarB1DiaTextBox.Text, 25),
+                    Direction = ParseDirection(rebarB1DirCombo),
+                    Spacing = ParseDouble(rebarB1SpacingTextBox.Text, 200)
+                },
+                B2 = new TeklaPlugin.Services.Foundation.Models.RebarLayer
+                {
+                    Diameter = ParseDouble(rebarB2DiaTextBox.Text, 25),
+                    Direction = ParseDirection(rebarB2DirCombo),
+                    Spacing = ParseDouble(rebarB2SpacingTextBox.Text, 200)
+                },
+                TopCover = ParseDouble(rebarTopCoverTextBox.Text, 50),
+                BottomCover = ParseDouble(rebarBottomCoverTextBox.Text, 50),
+                HookLength = ParseDouble(rebarHookLengthTextBox.Text, 0),
+                Side = new TeklaPlugin.Services.Foundation.Models.SideReinforcement
+                {
+                    Diameter = ParseDouble(rebarSideDiaTextBox.Text, 12),
+                    Spacing = ParseDouble(rebarSideSpacingTextBox.Text, 200)
+                }
+            };
+
+            // Add intermediate layers if specified
+            int intWidthLayers = (int)ParseDouble(rebarIntWidthLayersTextBox.Text, 0);
+            if (intWidthLayers > 0)
+            {
+                rebar.IntermediateLayers.Add(new TeklaPlugin.Services.Foundation.Models.IntermediateReinforcement
+                {
+                    Diameter = ParseDouble(rebarIntWidthDiaTextBox.Text, 16),
+                    Direction = TeklaPlugin.Services.Foundation.Models.RebarDirection.Width,
+                    NumberOfLayers = intWidthLayers,
+                    Spacing = ParseDouble(rebarIntWidthSpacingTextBox.Text, 200)
+                });
+            }
+
+            int intLengthLayers = (int)ParseDouble(rebarIntLengthLayersTextBox.Text, 0);
+            if (intLengthLayers > 0)
+            {
+                rebar.IntermediateLayers.Add(new TeklaPlugin.Services.Foundation.Models.IntermediateReinforcement
+                {
+                    Diameter = ParseDouble(rebarIntLengthDiaTextBox.Text, 16),
+                    Direction = TeklaPlugin.Services.Foundation.Models.RebarDirection.Length,
+                    NumberOfLayers = intLengthLayers,
+                    Spacing = ParseDouble(rebarIntLengthSpacingTextBox.Text, 200)
+                });
+            }
+
+            return rebar;
+        }
+
+        private TeklaPlugin.Services.Piles.Models.PileReinforcementParameters BuildPileReinforcementParams()
+        {
+            if (!pileRebarEnableCheckBox.Checked) return null;
+
+            return new TeklaPlugin.Services.Piles.Models.PileReinforcementParameters
+            {
+                Cover = ParseDouble(pileRebarCoverTextBox.Text, 50),
+                SpiralDiameter = ParseDouble(pileRebarSpiralDiaTextBox.Text, 12),
+                SpiralPitch = ParseDouble(pileRebarSpiralPitchTextBox.Text, 100),
+                MainBarDiameter = ParseDouble(pileRebarMainDiaTextBox.Text, 20),
+                BarsPerLayer = pileRebarBarsPerLayerTextBox.Text.Trim(),
+                SpacerDiameter = ParseDouble(pileRebarSpacerDiaTextBox.Text, 12),
+                MainBarSpliceLength = ParseDouble(pileRebarMainSpliceTextBox.Text, 0),
+                CircStirrupEnabled = pileRebarCircStirrupEnableCheckBox.Checked,
+                CircStirrupDiameter = ParseDouble(pileRebarCircStirrupDiaTextBox.Text, 10),
+                CircStirrupPitch = ParseDouble(pileRebarCircStirrupPitchTextBox.Text, 200)
+            };
+        }
+
+        private ColumnReinforcementParameters BuildColumnReinforcementParams()
+        {
+            if (!colRebarEnableCheckBox.Checked) return null;
+
+            var intShape = InternalStirrupShape.Rectangular;
+            switch (colRebarIntShapeComboBox.SelectedItem?.ToString())
+            {
+                case "Diamond": intShape = InternalStirrupShape.Diamond; break;
+                case "Cross": intShape = InternalStirrupShape.Cross; break;
+                case "Circular": intShape = InternalStirrupShape.Circular; break;
+            }
+
+            return new ColumnReinforcementParameters
+            {
+                Cover = ParseDouble(colRebarCoverTextBox.Text, 40),
+                MainBarDiameter = ParseDouble(colRebarMainDiaTextBox.Text, 16),
+                BarsPerLayer = colRebarBarsPerLayerTextBox.Text.Trim(),
+                LayerSpacing = ParseDouble(colRebarLayerSpacingTextBox.Text, 50),
+                SpacerDiameter = ParseDouble(colRebarSpacerDiaTextBox.Text, 10),
+                MainBarSpliceLength = ParseDouble(colRebarMainSpliceTextBox.Text, 0),
+                ExternalStirrupsEnabled = colRebarExtStirrupEnableCheckBox.Checked,
+                ExternalStirrupDiameter = ParseDouble(colRebarExtStirrupDiaTextBox.Text, 10),
+                ExternalStirrupSpacing = ParseDouble(colRebarExtStirrupSpacingTextBox.Text, 150),
+                IncludeSeismicHooks = colRebarSeismicHooksCheckBox.Checked,
+                HookLength = ParseDouble(colRebarHookLengthTextBox.Text, 0),
+                InternalStirrupsEnabled = colRebarIntStirrupEnableCheckBox.Checked,
+                InternalStirrupDiameter = ParseDouble(colRebarIntStirrupDiaTextBox.Text, 8),
+                InternalStirrupSpacing = ParseDouble(colRebarIntStirrupSpacingTextBox.Text, 300),
+                InternalShape = intShape
+            };
         }
 
         private void AddTooltips()
@@ -1029,20 +1417,52 @@ namespace TeklaPlugin.Forms.Main
         private void AddInputValidation()
         {
             // Setup all textboxes with default values (no validation for now)
-            SetupTextBox(foundationWidthTextBox, "2000");
+            SetupTextBox(foundationWidthTextBox, "3000");
             SetupTextBox(foundationLengthTextBox, "4000");
             SetupTextBox(foundationHeightTextBox, "600");
+
+            // Foundation reinforcement defaults
+            SetupTextBox(rebarT1DiaTextBox, "25");
+            SetupTextBox(rebarT2DiaTextBox, "25");
+            SetupTextBox(rebarB1DiaTextBox, "25");
+            SetupTextBox(rebarB2DiaTextBox, "25");
+            SetupTextBox(rebarTopCoverTextBox, "50");
+            SetupTextBox(rebarBottomCoverTextBox, "50");
+            SetupTextBox(rebarHookLengthTextBox, "0");
+            SetupTextBox(rebarB1SpacingTextBox, "200");
+            SetupTextBox(rebarB2SpacingTextBox, "200");
+            SetupTextBox(rebarT1SpacingTextBox, "200");
+            SetupTextBox(rebarT2SpacingTextBox, "200");
+            SetupTextBox(rebarSideDiaTextBox, "12");
+            SetupTextBox(rebarSideSpacingTextBox, "200");
+            SetupTextBox(rebarIntWidthDiaTextBox, "16");
+            SetupTextBox(rebarIntWidthLayersTextBox, "0");
+            SetupTextBox(rebarIntWidthSpacingTextBox, "200");
+            SetupTextBox(rebarIntLengthDiaTextBox, "16");
+            SetupTextBox(rebarIntLengthLayersTextBox, "0");
+            SetupTextBox(rebarIntLengthSpacingTextBox, "200");
 
             SetupTextBox(matCantileverTextBox, "300");
             SetupTextBox(matThicknessTextBox, "200");
 
-            SetupTextBox(pileRowsTextBox, "3");
-            SetupTextBox(pileColumnsTextBox, "3");
+            SetupTextBox(pileRowsTextBox, "2");
+            SetupTextBox(pileColumnsTextBox, "2");
             SetupTextBox(pileRowDistanceTextBox, "2000");
             SetupTextBox(pileColumnDistanceTextBox, "2000");
             SetupTextBox(pileLengthTextBox, "12000");
             SetupTextBox(pileDiameterTextBox, "600");
-            SetupTextBox(pileEmbeddedLengthTextBox, "2000");
+            SetupTextBox(pileEmbeddedLengthTextBox, "500");
+
+            // Pile reinforcement defaults
+            SetupTextBox(pileRebarCoverTextBox, "50");
+            SetupTextBox(pileRebarSpiralDiaTextBox, "12");
+            SetupTextBox(pileRebarSpiralPitchTextBox, "100");
+            SetupTextBox(pileRebarMainDiaTextBox, "20");
+            SetupTextBox(pileRebarBarsPerLayerTextBox, "10");
+            SetupTextBox(pileRebarSpacerDiaTextBox, "12");
+            SetupTextBox(pileRebarMainSpliceTextBox, "0");
+            SetupTextBox(pileRebarCircStirrupDiaTextBox, "10");
+            SetupTextBox(pileRebarCircStirrupPitchTextBox, "200");
 
             SetupTextBox(lamelarWidthTextBox, "400");
             SetupTextBox(lamelarThicknessTextBox, "300");
@@ -1059,11 +1479,40 @@ namespace TeklaPlugin.Forms.Main
             SetupTextBox(circularOffsetXTextBox, "0");
             SetupTextBox(circularOffsetYTextBox, "0");
 
+            // Column reinforcement defaults
+            SetupTextBox(colRebarCoverTextBox, "40");
+            SetupTextBox(colRebarMainDiaTextBox, "16");
+            SetupTextBox(colRebarBarsPerLayerTextBox, "8");
+            SetupTextBox(colRebarLayerSpacingTextBox, "50");
+            SetupTextBox(colRebarSpacerDiaTextBox, "10");
+            SetupTextBox(colRebarMainSpliceTextBox, "0");
+            SetupTextBox(colRebarExtStirrupDiaTextBox, "10");
+            SetupTextBox(colRebarExtStirrupSpacingTextBox, "150");
+            SetupTextBox(colRebarHookLengthTextBox, "0");
+            SetupTextBox(colRebarIntStirrupDiaTextBox, "8");
+            SetupTextBox(colRebarIntStirrupSpacingTextBox, "300");
+
             SetupTextBox(capTopLengthTextBox, "4000");
             SetupTextBox(capBottomLengthTextBox, "2000");
-            SetupTextBox(capHeightTextBox, "500");
             SetupTextBox(capWidthTextBox, "600");
+            SetupTextBox(capDepthTextBox, "500");
+            SetupTextBox(capHeightDiffTextBox, "300");
             SetupTextBox(capPTextBox, "0");
+            SetupTextBox(capCutXTextBox, "0");
+            SetupTextBox(capCutYTextBox, "0");
+            SetupTextBox(capFTextBox, "0");
+            SetupTextBox(capD1TextBox, "0");
+            SetupTextBox(capD2TextBox, "0");
+            SetupTextBox(capD3TextBox, "0");
+            SetupTextBox(capD4TextBox, "0");
+
+            SetupTextBox(bufferNumberTextBox, "3");
+            SetupTextBox(bufferSpacingTextBox, "500");
+            SetupTextBox(bufferLeftOffsetTextBox, "200");
+            SetupTextBox(bufferRightOffsetTextBox, "200");
+            SetupTextBox(bufferWidthTextBox, "400");
+            SetupTextBox(bufferBreadthTextBox, "300");
+            SetupTextBox(bufferHeightsTextBox, "50,50,50");
         }
 
         private void SetupTextBox(TextBox textBox, string defaultValue = "")
@@ -1079,21 +1528,103 @@ namespace TeklaPlugin.Forms.Main
         private void CreateFoundationTab()
         {
             TabPage tab = new TabPage("Foundation");
+            tab.AutoScroll = true;
             tabControl.TabPages.Add(tab);
 
             int yPos = 20;
 
             // Foundation Dimensions
             AddLabelAndTextBox(tab, "Width (mm):", ref foundationWidthTextBox, "2000", 20, yPos);
-            yPos += 35;
-            AddLabelAndTextBox(tab, "Length (mm):", ref foundationLengthTextBox, "4000", 20, yPos);
-            yPos += 35;
+            AddLabelAndTextBox(tab, "Length (mm):", ref foundationLengthTextBox, "4000", 310, yPos);
+            yPos += 30;
             AddLabelAndTextBox(tab, "Height (mm):", ref foundationHeightTextBox, "600", 20, yPos);
-            yPos += 35;
+            yPos += 30;
 
             // Material & Class
             AddLabelAndComboBox(tab, "Material:", ref foundationMaterialComboBox, 20, yPos);
-            AddLabelAndComboBox(tab, "Class:", ref foundationClassComboBox, 200, yPos);
+            AddLabelAndComboBox(tab, "Class:", ref foundationClassComboBox, 310, yPos);
+            yPos += 35;
+
+            // --- Reinforcement Section ---
+            Label rebarHeader = new Label();
+            rebarHeader.Text = "── Reinforcement ──";
+            rebarHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            rebarHeader.Location = new System.Drawing.Point(20, yPos);
+            rebarHeader.AutoSize = true;
+            tab.Controls.Add(rebarHeader);
+            yPos += 25;
+
+            // Cover
+            AddLabelAndTextBox(tab, "Top Cover (mm):", ref rebarTopCoverTextBox, "50", 20, yPos);
+            AddLabelAndTextBox(tab, "Bottom Cover (mm):", ref rebarBottomCoverTextBox, "50", 310, yPos);
+            yPos += 30;
+
+            // B1 - most bottom layer
+            AddLabelAndTextBox(tab, "B1 Dia (mm):", ref rebarB1DiaTextBox, "25", 20, yPos);
+            AddLabelAndDirectionCombo(tab, "B1 Dir:", ref rebarB1DirCombo, "Length", 310, yPos);
+            yPos += 30;
+            // B2 - second bottom layer
+            AddLabelAndTextBox(tab, "B2 Dia (mm):", ref rebarB2DiaTextBox, "25", 20, yPos);
+            AddLabelAndDirectionCombo(tab, "B2 Dir:", ref rebarB2DirCombo, "Width", 310, yPos);
+            yPos += 30;
+            // Bottom spacing
+            AddLabelAndTextBox(tab, "B1 Spacing (mm):", ref rebarB1SpacingTextBox, "200", 20, yPos);
+            AddLabelAndTextBox(tab, "B2 Spacing (mm):", ref rebarB2SpacingTextBox, "200", 310, yPos);
+            yPos += 30;
+
+            // T1 - most top layer
+            AddLabelAndTextBox(tab, "T1 Dia (mm):", ref rebarT1DiaTextBox, "25", 20, yPos);
+            AddLabelAndDirectionCombo(tab, "T1 Dir:", ref rebarT1DirCombo, "Length", 310, yPos);
+            yPos += 30;
+            // T2 - second top layer
+            AddLabelAndTextBox(tab, "T2 Dia (mm):", ref rebarT2DiaTextBox, "25", 20, yPos);
+            AddLabelAndDirectionCombo(tab, "T2 Dir:", ref rebarT2DirCombo, "Width", 310, yPos);
+            yPos += 30;
+            // Top spacing
+            AddLabelAndTextBox(tab, "T1 Spacing (mm):", ref rebarT1SpacingTextBox, "200", 20, yPos);
+            AddLabelAndTextBox(tab, "T2 Spacing (mm):", ref rebarT2SpacingTextBox, "200", 310, yPos);
+            yPos += 30;
+
+            // Hook length (applies to T1, T2, B1, B2)
+            AddLabelAndTextBox(tab, "Hook Length (mm):", ref rebarHookLengthTextBox, "0", 20, yPos);
+            yPos += 30;
+
+            // Side Reinforcement
+            AddLabelAndTextBox(tab, "Side Dia (mm):", ref rebarSideDiaTextBox, "12", 20, yPos);
+            AddLabelAndTextBox(tab, "Side Spacing (mm):", ref rebarSideSpacingTextBox, "200", 310, yPos);
+            yPos += 30;
+
+            // Intermediate - Width direction
+            AddLabelAndTextBox(tab, "Int. Width Dia (mm):", ref rebarIntWidthDiaTextBox, "16", 20, yPos);
+            AddLabelAndTextBox(tab, "Int. Width Layers:", ref rebarIntWidthLayersTextBox, "0", 310, yPos);
+            yPos += 30;
+            AddLabelAndTextBox(tab, "Int. Width Spc (mm):", ref rebarIntWidthSpacingTextBox, "200", 20, yPos);
+            yPos += 30;
+
+            // Intermediate - Length direction
+            AddLabelAndTextBox(tab, "Int. Length Dia (mm):", ref rebarIntLengthDiaTextBox, "16", 20, yPos);
+            AddLabelAndTextBox(tab, "Int. Length Layers:", ref rebarIntLengthLayersTextBox, "0", 310, yPos);
+            yPos += 30;
+            AddLabelAndTextBox(tab, "Int. Length Spc (mm):", ref rebarIntLengthSpacingTextBox, "200", 20, yPos);
+        }
+
+        private void AddLabelAndDirectionCombo(Control parent, string labelText, ref ComboBox comboBox, string defaultValue, int x, int y)
+        {
+            Label label = new Label();
+            label.Text = labelText;
+            label.Location = new System.Drawing.Point(x, y);
+            label.Size = new Size(150, 20);
+            label.Font = new Font("Segoe UI", 9F);
+            parent.Controls.Add(label);
+
+            comboBox = new ComboBox();
+            comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox.Items.AddRange(new object[] { "Width", "Length" });
+            comboBox.SelectedItem = defaultValue;
+            comboBox.Location = new System.Drawing.Point(x + 160, y);
+            comboBox.Size = new Size(120, 23);
+            comboBox.Font = new Font("Segoe UI", 9F);
+            parent.Controls.Add(comboBox);
         }
 
         private void CreateMatTab()
@@ -1116,6 +1647,7 @@ namespace TeklaPlugin.Forms.Main
         private void CreatePilesTab()
         {
             TabPage tab = new TabPage("Piles");
+            tab.AutoScroll = true;
             tabControl.TabPages.Add(tab);
 
             int yPos = 20;
@@ -1138,12 +1670,201 @@ namespace TeklaPlugin.Forms.Main
             // Material & Class
             AddLabelAndComboBox(tab, "Material:", ref pilesMaterialComboBox, 20, yPos);
             AddLabelAndComboBox(tab, "Class:", ref pilesClassComboBox, 200, yPos);
+            yPos += 40;
+
+            // ── Reinforcement Section ──
+            Label rebarHeader = new Label();
+            rebarHeader.Text = "── Reinforcement ──";
+            rebarHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            rebarHeader.Location = new System.Drawing.Point(20, yPos);
+            rebarHeader.AutoSize = true;
+            tab.Controls.Add(rebarHeader);
+            yPos += 25;
+
+            // Enable reinforcement checkbox + Cover on same row
+            pileRebarEnableCheckBox = new CheckBox();
+            pileRebarEnableCheckBox.Text = "Enable Pile Reinforcement";
+            pileRebarEnableCheckBox.Location = new System.Drawing.Point(20, yPos);
+            pileRebarEnableCheckBox.AutoSize = true;
+            pileRebarEnableCheckBox.Font = new Font("Segoe UI", 9F);
+            pileRebarEnableCheckBox.Checked = false;
+            pileRebarEnableCheckBox.CheckedChanged += PileRebarEnable_Changed;
+            tab.Controls.Add(pileRebarEnableCheckBox);
+            AddLabelAndTextBox(tab, "Cover (mm):", ref pileRebarCoverTextBox, "50", 310, yPos);
+            yPos += 30;
+
+            // Spiral stirrup: Dia + Pitch
+            AddLabelAndTextBox(tab, "Spiral Dia (mm):", ref pileRebarSpiralDiaTextBox, "12", 20, yPos);
+            AddLabelAndTextBox(tab, "Spiral Pitch (mm):", ref pileRebarSpiralPitchTextBox, "100", 310, yPos);
+            yPos += 30;
+
+            // Main bars: Dia + Spacer + Splice
+            AddLabelAndTextBox(tab, "Main Bar Dia (mm):", ref pileRebarMainDiaTextBox, "20", 20, yPos);
+            AddLabelAndTextBox(tab, "Spacer Dia (mm):", ref pileRebarSpacerDiaTextBox, "12", 230, yPos);
+            AddLabelAndTextBox(tab, "Splice Len (mm):", ref pileRebarMainSpliceTextBox, "0", 440, yPos);
+            yPos += 30;
+
+            // Bars per layer (csv) + hint
+            AddLabelAndTextBox(tab, "Bars/Layer (csv):", ref pileRebarBarsPerLayerTextBox, "20,20,10", 20, yPos);
+            Label barsHintLabel = new Label();
+            barsHintLabel.Text = "e.g. 20,20,10 = 3 layers";
+            barsHintLabel.Font = new Font("Segoe UI", 7F, FontStyle.Italic);
+            barsHintLabel.ForeColor = Color.Gray;
+            barsHintLabel.Location = new System.Drawing.Point(310, yPos + 3);
+            barsHintLabel.AutoSize = true;
+            barsHintLabel.Tag = "pileRebarControl";
+            tab.Controls.Add(barsHintLabel);
+            yPos += 30;
+
+            // Circular stirrup: checkbox + Dia + Pitch
+            pileRebarCircStirrupEnableCheckBox = new CheckBox();
+            pileRebarCircStirrupEnableCheckBox.Text = "Enable Circular Stirrup (inside layers)";
+            pileRebarCircStirrupEnableCheckBox.Location = new System.Drawing.Point(20, yPos);
+            pileRebarCircStirrupEnableCheckBox.AutoSize = true;
+            pileRebarCircStirrupEnableCheckBox.Font = new Font("Segoe UI", 9F);
+            pileRebarCircStirrupEnableCheckBox.Checked = false;
+            pileRebarCircStirrupEnableCheckBox.Tag = "pileRebarControl";
+            pileRebarCircStirrupEnableCheckBox.CheckedChanged += PileCircStirrupEnable_Changed;
+            tab.Controls.Add(pileRebarCircStirrupEnableCheckBox);
+            yPos += 28;
+            AddLabelAndTextBox(tab, "Stirrup Dia (mm):", ref pileRebarCircStirrupDiaTextBox, "10", 20, yPos);
+            AddLabelAndTextBox(tab, "Stirrup Pitch (mm):", ref pileRebarCircStirrupPitchTextBox, "200", 310, yPos);
+
+            // Set initial visibility of reinforcement controls
+            SetPileRebarControlsEnabled(false);
+        }
+
+        private void PileRebarEnable_Changed(object sender, EventArgs e)
+        {
+            SetPileRebarControlsEnabled(pileRebarEnableCheckBox.Checked);
+        }
+
+        private void PileCircStirrupEnable_Changed(object sender, EventArgs e)
+        {
+            bool on = pileRebarEnableCheckBox.Checked && pileRebarCircStirrupEnableCheckBox.Checked;
+            pileRebarCircStirrupDiaTextBox.Enabled = on;
+            pileRebarCircStirrupPitchTextBox.Enabled = on;
+        }
+
+        private void SetPileRebarControlsEnabled(bool enabled)
+        {
+            pileRebarCoverTextBox.Enabled = enabled;
+            pileRebarSpiralDiaTextBox.Enabled = enabled;
+            pileRebarSpiralPitchTextBox.Enabled = enabled;
+            pileRebarMainDiaTextBox.Enabled = enabled;
+            pileRebarBarsPerLayerTextBox.Enabled = enabled;
+            pileRebarSpacerDiaTextBox.Enabled = enabled;
+            pileRebarMainSpliceTextBox.Enabled = enabled;
+            pileRebarCircStirrupEnableCheckBox.Enabled = enabled;
+            bool stirrupOn = enabled && pileRebarCircStirrupEnableCheckBox.Checked;
+            pileRebarCircStirrupDiaTextBox.Enabled = stirrupOn;
+            pileRebarCircStirrupPitchTextBox.Enabled = stirrupOn;
         }
 
         private bool ValidateAllInputs()
         {
-            // For now, just allow any input - no validation
-            return true;
+            try
+            {
+                // Determine elevation type
+                ElevationType elevationType = lamelarRadioButton.Checked
+                    ? ElevationType.Lamelar
+                    : ElevationType.Circular;
+
+                // Build parameter objects from current UI values
+                var lamelarParams = new TeklaPlugin.Services.Elevation.Models.LamelarElevationParameters
+                {
+                    Width = ParseDouble(lamelarWidthTextBox.Text, 400),
+                    Thickness = ParseDouble(lamelarThicknessTextBox.Text, 300),
+                    Height = ParseDouble(lamelarHeightTextBox.Text, 8000),
+                    NumberOfColumns = (int)ParseDouble(lamelarNumberOfColumnsTextBox.Text, 1),
+                    DistanceBetweenColumns = ParseDouble(lamelarDistanceTextBox.Text, 1000),
+                    OffsetX = ParseDouble(lamelarOffsetXTextBox.Text, 0),
+                    OffsetY = ParseDouble(lamelarOffsetYTextBox.Text, 0)
+                };
+
+                var circularParams = new TeklaPlugin.Services.Elevation.Models.CircularElevationParameters
+                {
+                    Diameter = ParseDouble(circularDiameterTextBox.Text, 600),
+                    Height = ParseDouble(circularHeightTextBox.Text, 8000),
+                    NumberOfColumns = (int)ParseDouble(circularColumnsTextBox.Text, 4),
+                    DistanceBetweenColumns = ParseDouble(circularDistanceTextBox.Text, 1500),
+                    OffsetX = ParseDouble(circularOffsetXTextBox.Text, 0),
+                    OffsetY = ParseDouble(circularOffsetYTextBox.Text, 0)
+                };
+
+                var capParams = new TeklaPlugin.Services.Cap.Models.CapParameters
+                {
+                    TopLength = ParseDouble(capTopLengthTextBox.Text, 4000),
+                    BottomLength = ParseDouble(capBottomLengthTextBox.Text, 2000),
+                    Width = ParseDouble(capWidthTextBox.Text, 600),
+                    Depth = ParseDouble(capDepthTextBox.Text, 500),
+                    HeightDiff = ParseDouble(capHeightDiffTextBox.Text, 300),
+                    P = ParseDouble(capPTextBox.Text, 0),
+                    CutX = ParseDouble(capCutXTextBox.Text, 0),
+                    CutY = ParseDouble(capCutYTextBox.Text, 0),
+                    CutSide = capCutSideComboBox.SelectedItem?.ToString() ?? "Right",
+                    F = ParseDouble(capFTextBox.Text, 0),
+                    D1 = ParseDouble(capD1TextBox.Text, 0),
+                    D2 = ParseDouble(capD2TextBox.Text, 0),
+                    D3 = ParseDouble(capD3TextBox.Text, 0),
+                    D4 = ParseDouble(capD4TextBox.Text, 0)
+                };
+
+                var pileParams = new TeklaPlugin.Services.Piles.Models.PileParameters
+                {
+                    Rows = (int)ParseDouble(pileRowsTextBox.Text, 3),
+                    Columns = (int)ParseDouble(pileColumnsTextBox.Text, 3),
+                    RowDistance = ParseDouble(pileRowDistanceTextBox.Text, 2000),
+                    ColumnDistance = ParseDouble(pileColumnDistanceTextBox.Text, 2000),
+                    Diameter = ParseDouble(pileDiameterTextBox.Text, 600),
+                    EmbeddedLength = ParseDouble(pileEmbeddedLengthTextBox.Text, 2000),
+                    Reinforcement = BuildPileReinforcementParams()
+                };
+
+                var foundationParams = new TeklaPlugin.Services.Foundation.Models.FoundationParameters
+                {
+                    Width = ParseDouble(foundationWidthTextBox.Text, 2000),
+                    Length = ParseDouble(foundationLengthTextBox.Text, 4000),
+                    Height = ParseDouble(foundationHeightTextBox.Text, 600),
+                    Reinforcement = BuildReinforcementParams()
+                };
+
+                var bufferParams = new TeklaPlugin.Services.Buffer.Models.BufferParameters
+                {
+                    Number = (int)ParseDouble(bufferNumberTextBox.Text, 3),
+                    Spacing = ParseDouble(bufferSpacingTextBox.Text, 500),
+                    LeftOffset = ParseDouble(bufferLeftOffsetTextBox.Text, 200),
+                    RightOffset = ParseDouble(bufferRightOffsetTextBox.Text, 200),
+                    Width = ParseDouble(bufferWidthTextBox.Text, 400),
+                    Breadth = ParseDouble(bufferBreadthTextBox.Text, 300),
+                    Heights = bufferHeightsTextBox.Text
+                };
+
+                // Run cross-object validations
+                var validator = new StructureValidator();
+                var result = validator.ValidateAll(
+                    elevationType, lamelarParams, circularParams,
+                    capParams, pileParams, foundationParams, bufferParams);
+
+                if (!result.IsValid)
+                {
+                    MessageBox.Show(
+                        "Geometry validation failed:\n\n" + result.GetSummary(),
+                        "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error during validation: {ex.Message}",
+                    "Validation Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
         }
 
         private void AddLabelAndTextBox(Control parent, string labelText, ref TextBox textBox, string defaultValue, int x, int y)
@@ -1238,7 +1959,7 @@ namespace TeklaPlugin.Forms.Main
                         "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-
+                //here
                 // Create StructureCreatorService
                 var structureCreatorService = new StructureCreatorService(model);
 
@@ -1258,7 +1979,8 @@ namespace TeklaPlugin.Forms.Main
                     Length = double.Parse(foundationLengthTextBox.Text),
                     Height = double.Parse(foundationHeightTextBox.Text),
                     Material = foundationMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
-                    Class = foundationClassComboBox.SelectedItem?.ToString() ?? "8"
+                    Class = foundationClassComboBox.SelectedItem?.ToString() ?? "8",
+                    Reinforcement = BuildReinforcementParams()
                 };
 
                 var matParams = new TeklaPlugin.Services.Mat.Models.MatParameters
@@ -1279,7 +2001,8 @@ namespace TeklaPlugin.Forms.Main
                     Diameter = double.Parse(pileDiameterTextBox.Text),
                     EmbeddedLength = double.Parse(pileEmbeddedLengthTextBox.Text),
                     Material = pilesMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
-                    Class = pilesClassComboBox.SelectedItem?.ToString() ?? "8"
+                    Class = pilesClassComboBox.SelectedItem?.ToString() ?? "8",
+                    Reinforcement = BuildPileReinforcementParams()
                 };
 
                 // Determine elevation type and collect parameters
@@ -1295,7 +2018,8 @@ namespace TeklaPlugin.Forms.Main
                     OffsetX = double.Parse(lamelarOffsetXTextBox.Text),
                     OffsetY = double.Parse(lamelarOffsetYTextBox.Text),
                     Material = lamelarMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
-                    Class = lamelarClassComboBox.SelectedItem?.ToString() ?? "8"
+                    Class = lamelarClassComboBox.SelectedItem?.ToString() ?? "8",
+                    Reinforcement = BuildColumnReinforcementParams()
                 };
 
                 var circularParams = new TeklaPlugin.Services.Elevation.Models.CircularElevationParameters
@@ -1307,18 +2031,41 @@ namespace TeklaPlugin.Forms.Main
                     OffsetX = double.Parse(circularOffsetXTextBox.Text),
                     OffsetY = double.Parse(circularOffsetYTextBox.Text),
                     Material = circularMaterialComboBox.SelectedItem?.ToString() ?? "C50/60",
-                    Class = circularClassComboBox.SelectedItem?.ToString() ?? "8"
+                    Class = circularClassComboBox.SelectedItem?.ToString() ?? "8",
+                    Reinforcement = BuildColumnReinforcementParams()
                 };
 
                 var capParams = new TeklaPlugin.Services.Cap.Models.CapParameters
                 {
                     TopLength = double.Parse(capTopLengthTextBox.Text),
                     BottomLength = double.Parse(capBottomLengthTextBox.Text),
-                    Height = double.Parse(capHeightTextBox.Text),
                     Width = double.Parse(capWidthTextBox.Text),
+                    Depth = double.Parse(capDepthTextBox.Text),
+                    HeightDiff = double.Parse(capHeightDiffTextBox.Text),
                     P = double.Parse(capPTextBox.Text),
+                    CutX = double.Parse(capCutXTextBox.Text),
+                    CutY = double.Parse(capCutYTextBox.Text),
+                    CutSide = capCutSideComboBox.SelectedItem?.ToString() ?? "Right",
+                    F = double.Parse(capFTextBox.Text),
+                    D1 = double.Parse(capD1TextBox.Text),
+                    D2 = double.Parse(capD2TextBox.Text),
+                    D3 = double.Parse(capD3TextBox.Text),
+                    D4 = double.Parse(capD4TextBox.Text),
                     Material = capMaterialComboBox.SelectedItem?.ToString() ?? "C12/15",
                     Class = capClassComboBox.SelectedItem?.ToString() ?? "8"
+                };
+
+                var bufferParams = new TeklaPlugin.Services.Buffer.Models.BufferParameters
+                {
+                    Number = int.Parse(bufferNumberTextBox.Text),
+                    Spacing = double.Parse(bufferSpacingTextBox.Text),
+                    LeftOffset = double.Parse(bufferLeftOffsetTextBox.Text),
+                    RightOffset = double.Parse(bufferRightOffsetTextBox.Text),
+                    Width = double.Parse(bufferWidthTextBox.Text),
+                    Breadth = double.Parse(bufferBreadthTextBox.Text),
+                    Heights = bufferHeightsTextBox.Text,
+                    Material = bufferMaterialComboBox.SelectedItem?.ToString() ?? "C12/15",
+                    Class = bufferClassComboBox.SelectedItem?.ToString() ?? "8"
                 };
 
                 // Create the complete structure using the unified service
@@ -1330,7 +2077,8 @@ namespace TeklaPlugin.Forms.Main
                     elevationType,
                     lamelarParams,
                     circularParams,
-                    capParams);
+                    capParams,
+                    bufferParams);
 
                 MessageBox.Show("Structure created successfully!", "Success",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);

@@ -13,5 +13,8 @@ namespace TeklaPlugin.Services.Piles.Models
         public double EmbeddedLength { get; set; }
         public string Material { get; set; } = "C50/60"; // Default concrete material for piles
         public string Class { get; set; } = "8"; // Default class for piles
+
+        // Reinforcement parameters (null = no reinforcement)
+        public PileReinforcementParameters Reinforcement { get; set; } = null;
     }
 }

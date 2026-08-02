@@ -84,15 +84,24 @@
     <Compile Include="Forms\Main\StructureCreatorForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\Main\StructureValidator.cs" />
     <Compile Include="Forms\Main\StructureCreatorForm.Designer.cs">
       <DependentUpon>StructureCreatorForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Services\Core\Models\GlobalParameters.cs" />
     <Compile Include="Services\Foundation\Models\FoundationParameters.cs" />
+    <Compile Include="Services\Foundation\Models\FoundationReinforcementParameters.cs" />
+    <Compile Include="Services\Foundation\FoundationReinforcementService.cs" />
     <Compile Include="Services\Mat\Models\MatParameters.cs" />
     <Compile Include="Services\Piles\Models\PileParameters.cs" />
+    <Compile Include="Services\Piles\Models\PileReinforcementParameters.cs" />
+    <Compile Include="Services\Piles\PileReinforcementService.cs" />
     <Compile Include="Services\Elevation\Models\ElevationParameters.cs" />
+    <Compile Include="Services\Elevation\Models\ColumnReinforcementParameters.cs" />
+    <Compile Include="Services\Elevation\ColumnReinforcementService.cs" />
     <Compile Include="Services\Cap\Models\CapParameters.cs" />
+    <Compile Include="Services\Buffer\Models\BufferParameters.cs" />
+    <Compile Include="Services\Buffer\BufferService.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TeklaQueries\MaterialsService.cs" />

@@ -20,6 +20,12 @@ namespace TeklaPlugin.Services.Elevation.Models
         public double OffsetY { get; set; }
         public string Material { get; set; } = "C50/60"; // Default concrete material
         public string Class { get; set; } = "8"; // Default class for elevation
+
+        /// <summary>
+        /// Reinforcement parameters for lamelar (rectangular) columns.
+        /// Set to null to skip reinforcement creation.
+        /// </summary>
+        public ColumnReinforcementParameters Reinforcement { get; set; }
     }
 
     // Circular elevation parameters
@@ -33,5 +39,11 @@ namespace TeklaPlugin.Services.Elevation.Models
         public double OffsetY { get; set; }
         public string Material { get; set; } = "C50/60"; // Default concrete material
         public string Class { get; set; } = "8"; // Default class for elevation
+
+        /// <summary>
+        /// Reinforcement parameters for circular columns.
+        /// Set to null to skip reinforcement creation.
+        /// </summary>
+        public ColumnReinforcementParameters Reinforcement { get; set; }
     }
 }

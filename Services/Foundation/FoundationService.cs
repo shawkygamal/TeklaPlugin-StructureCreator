@@ -13,10 +13,12 @@ namespace TeklaPlugin.Services.Foundation
     public class FoundationService
     {
         private readonly Model _model;
+        private readonly FoundationReinforcementService _rebarService;
 
         public FoundationService(Model model)
         {
             _model = model;
+            _rebarService = new FoundationReinforcementService(model);
         }
 
         public void CreateFoundation(TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.FoundationParameters foundation)
@@ -42,8 +44,9 @@ namespace TeklaPlugin.Services.Foundation
             if (foundationBeam.Insert())
             {
                 CreateCutPlane(foundationBeam, global, foundation, a);
-                CreateRebarSet(foundationBeam, global, foundation, a);
-                DrawCircles(foundationBeam, a, global, foundation);
+
+                // Use the separate reinforcement service
+                _rebarService.CreateReinforcement(foundationBeam, global, foundation, a);
             }
         }
 
@@ -96,127 +99,6 @@ namespace TeklaPlugin.Services.Foundation
 
             cutPlane.Insert();
             cutPlane2.Insert();
-        }
-
-        private void CreateRebarSet(Beam padFooting, TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.FoundationParameters foundation, double a)
-        {
-            TransformationPlane currentPlane = _model.GetWorkPlaneHandler().GetCurrentTransformationPlane();
-            TransformationPlane localPlane = new TransformationPlane(padFooting.GetCoordinateSystem());
-            _model.GetWorkPlaneHandler().SetCurrentTransformationPlane(localPlane);
-
-            Solid solid = padFooting.GetSolid();
-
-            RebarSet rebarSet = new RebarSet();
-            rebarSet.RebarProperties.Name = "RebarSet Test";
-            rebarSet.RebarProperties.Grade = "Undefined";
-            rebarSet.RebarProperties.BendingRadius = 50;
-            rebarSet.RebarProperties.Class = 7;
-            rebarSet.RebarProperties.Size = "25";
-
-            var legFace1 = new RebarLegFace
-            {
-                LayerOrderNumber = 2,
-                AdditonalOffset = -50,
-                Reversed = false
-            };
-            legFace1.Contour.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MinimumPoint.Y, solid.MinimumPoint.Z), null));
-            legFace1.Contour.AddContourPoint(new ContourPoint(new Point(solid.MinimumPoint.X, solid.MinimumPoint.Y, solid.MinimumPoint.Z), null));
-            legFace1.Contour.AddContourPoint(new ContourPoint(new Point(solid.MinimumPoint.X, solid.MaximumPoint.Y - 2 * a, solid.MinimumPoint.Z), null));
-            legFace1.Contour.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MaximumPoint.Y - 2 * a, solid.MinimumPoint.Z), null));
-            rebarSet.LegFaces.Add(legFace1);
-
-            var legFace2 = new RebarLegFace
-            {
-                LayerOrderNumber = 2,
-                AdditonalOffset = 50,
-                Reversed = false
-            };
-            legFace2.Contour.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MinimumPoint.Y, solid.MinimumPoint.Z), null));
-            legFace2.Contour.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MinimumPoint.Y + 2 * a, solid.MaximumPoint.Z), null));
-            legFace2.Contour.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MaximumPoint.Y, solid.MaximumPoint.Z), null));
-            legFace2.Contour.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MaximumPoint.Y - 2 * a, solid.MinimumPoint.Z), null));
-            rebarSet.LegFaces.Add(legFace2);
-
-            var legFace3 = new RebarLegFace
-            {
-                LayerOrderNumber = 2,
-                AdditonalOffset = 50,
-                Reversed = false
-            };
-            legFace3.Contour.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MinimumPoint.Y + 2 * a, solid.MaximumPoint.Z), null));
-            legFace3.Contour.AddContourPoint(new ContourPoint(new Point(solid.MinimumPoint.X, solid.MinimumPoint.Y + 2 * a, solid.MaximumPoint.Z), null));
-            legFace3.Contour.AddContourPoint(new ContourPoint(new Point(solid.MinimumPoint.X, solid.MaximumPoint.Y, solid.MaximumPoint.Z), null));
-            legFace3.Contour.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MaximumPoint.Y, solid.MaximumPoint.Z), null));
-            rebarSet.LegFaces.Add(legFace3);
-
-            var guideline = new RebarGuideline();
-            guideline.Spacing = RebarSpacing.Create(RebarSpacing.SpacingType.EXACT_FLEXIBLE_FIRST_AND_LAST, new RebarSpacing.Offset(true, 0), new RebarSpacing.Offset(true, 0), 200);
-
-            double l = Math.Cos(global.SkewAngle * Math.PI / 180) * foundation.Width;
-            double y = Math.Sin(global.SkewAngle * Math.PI / 180) * l;
-            double x = Math.Sqrt(l * l - y * y);
-
-            guideline.Curve.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MaximumPoint.Y - 2 * a, solid.MinimumPoint.Z), null));
-            guideline.Curve.AddContourPoint(new ContourPoint(new Point(solid.MaximumPoint.X, solid.MaximumPoint.Y - 2 * a - x, solid.MinimumPoint.Z + y), null));
-            rebarSet.Guidelines.Add(guideline);
-
-            rebarSet.Insert();
-
-            _model.GetWorkPlaneHandler().SetCurrentTransformationPlane(currentPlane);
-            _model.CommitChanges();
-        }
-
-        private void DrawCircles(Beam padFooting, double a, TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.FoundationParameters fParams)
-        {
-            TransformationPlane currentPlane = _model.GetWorkPlaneHandler().GetCurrentTransformationPlane();
-            TransformationPlane localPlane = new TransformationPlane(padFooting.GetCoordinateSystem());
-            _model.GetWorkPlaneHandler().SetCurrentTransformationPlane(localPlane);
-
-            Solid solid = padFooting.GetSolid();
-            if (solid == null) return;
-
-            double radius = 100.0;
-
-            Point center1 = new Point(new Point(solid.MaximumPoint.X, solid.MaximumPoint.Y - 2 * a, solid.MinimumPoint.Z));
-            DrawCircle(center1, radius);
-
-            double l = Math.Cos(global.SkewAngle * Math.PI / 180) * fParams.Width;
-            double y = Math.Sin(global.SkewAngle * Math.PI / 180) * l;
-            double x = Math.Sqrt(l * l - y * y);
-
-            Point center2 = new Point(solid.MaximumPoint.X, solid.MaximumPoint.Y - 2 * a - x, solid.MaximumPoint.Z);
-            DrawCircle(center2, radius);
-
-            _model.GetWorkPlaneHandler().SetCurrentTransformationPlane(currentPlane);
-        }
-
-        private void DrawCircle(Point center, double radius)
-        {
-            int numPoints = 36;
-            double angleStep = 2 * Math.PI / numPoints;
-
-            RebarSet rebarSet = new RebarSet();
-            rebarSet.RebarProperties.Name = "RebarSet Cerc";
-            rebarSet.RebarProperties.Grade = "Undefined";
-            rebarSet.RebarProperties.BendingRadius = 50;
-            rebarSet.RebarProperties.Class = 7;
-            rebarSet.RebarProperties.Size = "25";
-
-            var guideline = new RebarGuideline();
-            guideline.Spacing = RebarSpacing.Create(RebarSpacing.SpacingType.EXACT_FLEXIBLE_LAST, new RebarSpacing.Offset(true, 0), new RebarSpacing.Offset(true, 0), 100);
-
-            for (int i = 0; i < numPoints; i++)
-            {
-                double angle = i * angleStep;
-                double x = center.X + radius * Math.Cos(angle);
-                double y = center.Y + radius * Math.Sin(angle);
-                Point point = new Point(x, y, center.Z);
-                guideline.Curve.AddContourPoint(new ContourPoint(point, null));
-            }
-
-            rebarSet.Guidelines.Add(guideline);
-            rebarSet.Insert();
-            _model.CommitChanges();
         }
     }
 }

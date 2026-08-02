@@ -11,10 +11,12 @@ namespace TeklaPlugin.Services.Piles
     public class PilesService
     {
         private readonly Model _model;
+        private readonly PileReinforcementService _rebarService;
 
         public PilesService(Model model)
         {
             _model = model;
+            _rebarService = new PileReinforcementService(model);
         }
 
         public void CreatePiles(TeklaPlugin.Services.Core.Models.GlobalParameters global, Foundation.Models.FoundationParameters foundation, Models.PileParameters piles)
@@ -55,7 +57,14 @@ namespace TeklaPlugin.Services.Piles
                     pile.Position.Depth = Position.DepthEnum.MIDDLE;
                     pile.Name = $"Pile_{i}_{j}";
 
-                    pile.Insert();
+                    if (pile.Insert())
+                    {
+                        // Create reinforcement if parameters are provided
+                        if (piles.Reinforcement != null)
+                        {
+                            _rebarService.CreateReinforcement(pile, piles.Diameter, piles.Reinforcement);
+                        }
+                    }
                 }
             }
         }

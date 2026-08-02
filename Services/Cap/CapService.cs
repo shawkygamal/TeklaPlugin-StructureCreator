@@ -27,24 +27,31 @@ namespace TeklaPlugin.Services.Cap
             double a = Math.Tan(global.SkewAngle * Math.PI / 180) * maxLength / 2;
             double widthi_cap = maxLength + 2 * a; // Adjusted width including skew
 
+            // Determine effective beam width: if plan taper D values are set, use them
+            bool hasPlanTaper = cap.D1 > 0 || cap.D2 > 0 || cap.D3 > 0 || cap.D4 > 0;
+            double effectiveWidth = hasPlanTaper
+                ? Math.Max(cap.D1 + cap.D2, cap.D3 + cap.D4)
+                : cap.Width;
+
             // Calculate position with P offset from column center
             double offsetX = cap.P;
             double offsetY = 0;
 
-            // Rotate the offset by the global rotation angle
             double rotatedOffsetX = offsetX * Math.Cos(rotationAngleRadians) - offsetY * Math.Sin(rotationAngleRadians);
             double rotatedOffsetY = offsetX * Math.Sin(rotationAngleRadians) + offsetY * Math.Cos(rotationAngleRadians);
 
-            // Final position with column at bottom of lower (smaller) line and P offset
             double finalX = global.PositionX + rotatedOffsetX;
             double finalY = global.PositionY + rotatedOffsetY;
-            double finalZ_top = global.PositionZ + elevationCircularHeight + cap.Height;
+
+            // Total beam height = Depth (rectangular top) + HeightDiff (sloped bottom)
+            double totalHeight = cap.Depth + cap.HeightDiff;
+            double finalZ_top = global.PositionZ + elevationCircularHeight + totalHeight;
             double finalZ_bottom = global.PositionZ + elevationCircularHeight;
 
             Beam capBeam = new Beam();
             capBeam.StartPoint = new Point(finalX, finalY, finalZ_top);
             capBeam.EndPoint = new Point(finalX, finalY, finalZ_bottom);
-            capBeam.Profile = new Profile { ProfileString = $"{cap.Width}*{widthi_cap}" }; // Width (thickness) x MaxLength (adjusted for skew)
+            capBeam.Profile = new Profile { ProfileString = $"{effectiveWidth}*{widthi_cap}" };
             capBeam.Material = new Material { MaterialString = cap.Material };
             capBeam.Class = cap.Class;
             capBeam.Position.Rotation = Position.RotationEnum.FRONT;
@@ -55,6 +62,17 @@ namespace TeklaPlugin.Services.Cap
             if (capBeam.Insert())
             {
                 CreateCutPlaneCap(capBeam, global, cap, elevationCircularHeight, finalX, finalY);
+                CreateCrossSectionCut(capBeam, global, cap, finalX, finalY, finalZ_top, widthi_cap, effectiveWidth);
+
+                if (hasPlanTaper)
+                {
+                    CreatePlanTaperCuts(capBeam, cap, finalX, finalY, finalZ_top, widthi_cap, global.RotationAngle);
+                }
+
+                if (cap.F > 0 && cap.HeightDiff > 0)
+                {
+                    CreateWidthTaperCuts(capBeam, cap, effectiveWidth, global.RotationAngle);
+                }
             }
         }
 
@@ -66,15 +84,15 @@ namespace TeklaPlugin.Services.Cap
                 CreateSkewCutPlanes(cap, global, capParams, centerX, centerY);
             }
 
-            // Apply tapered cuts for trapezoidal shape
+            // Apply tapered cuts for trapezoidal shape (only in the HeightDiff portion)
             Point beamCenter = cap.StartPoint;
             double rotRad = -cap.Position.RotationOffset * Math.PI / 180.0;
 
             double topHalf = capParams.TopLength / 2.0;
             double botHalf = capParams.BottomLength / 2.0;
 
-            CreateTaperCutPlane(cap, beamCenter, rotRad, topHalf, botHalf, capParams.Height, isPositiveSide: true);
-            CreateTaperCutPlane(cap, beamCenter, rotRad, topHalf, botHalf, capParams.Height, isPositiveSide: false);
+            CreateTaperCutPlane(cap, beamCenter, rotRad, topHalf, botHalf, capParams.Depth, capParams.HeightDiff, isPositiveSide: true);
+            CreateTaperCutPlane(cap, beamCenter, rotRad, topHalf, botHalf, capParams.Depth, capParams.HeightDiff, isPositiveSide: false);
         }
 
         private void CreateSkewCutPlanes(Beam cap, TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.CapParameters capParams, double centerX, double centerY)
@@ -131,24 +149,24 @@ namespace TeklaPlugin.Services.Cap
             cutPlane_skew_2.Insert();
         }
 
-        private void CreateTaperCutPlane(Beam cap, Point center, double rotRad, double topHalf, double botHalf, double height, bool isPositiveSide)
+        private void CreateTaperCutPlane(Beam cap, Point center, double rotRad, double topHalf, double botHalf, double depth, double heightDiff, bool isPositiveSide)
         {
             double sign = isPositiveSide ? 1.0 : -1.0;
 
-            // 1. Define 3 points in Local Coordinates (X along Length, Z down)
-            // Point A (Top Edge)
+            // 1. Define 3 points in Local Coordinates (X along Length, Z down from beam top)
+            // Point A (Start of slope - at Depth level below top)
             double xA = sign * topHalf;
             double yA = 0;
-            double zA = 0;
+            double zA = -depth; // Slope starts at Depth below beam top
 
-            // Point B (Bottom Edge)
+            // Point B (Bottom Edge - at Depth + HeightDiff below top)
             double xB = sign * botHalf;
             double yB = 0;
-            double zB = -height;
+            double zB = -(depth + heightDiff); // Slope ends at bottom
 
-            // Point C (Width definer - parallel to Y, using Width parameter)
+            // Point C (Width definer - parallel to Y, at same level as A)
             double xC = xA;
-            double yC = 500.0; // Offset in Width direction (same as simpleBeamCut.cs)
+            double yC = 500.0; // Offset in Width direction
             double zC = zA;
 
             // 2. Rotate to Global Coordinates
@@ -173,6 +191,171 @@ namespace TeklaPlugin.Services.Cap
             }
 
             // 5. Insert CutPlane
+            CutPlane cut = new CutPlane();
+            cut.Father = cap;
+            cut.Plane = new Plane();
+            cut.Plane.Origin = pA;
+            cut.Plane.AxisX = vecAB;
+            cut.Plane.AxisY = vecAC;
+
+            cut.Insert();
+        }
+
+        private void CreateCrossSectionCut(Beam capBeam, TeklaPlugin.Services.Core.Models.GlobalParameters global, Models.CapParameters capParams, double centerX, double centerY, double topZ, double widthi_cap, double effectiveWidth)
+        {
+            if (capParams.CutX <= 0 || capParams.CutY <= 0) return;
+
+            double rotRad = global.RotationAngle * Math.PI / 180.0;
+
+            // Width direction in local coords = Y axis
+            // After rotation: global direction = (-sin(rotRad), cos(rotRad))
+            double widthOffset = (effectiveWidth / 2.0) - (capParams.CutX / 2.0);
+            if (capParams.CutSide == "Left")
+                widthOffset = -widthOffset;
+
+            double dx = widthOffset * (-Math.Sin(rotRad));
+            double dy = widthOffset * Math.Cos(rotRad);
+
+            // Cutting beam: vertical, from slightly above top down by CutY
+            Beam cutBeam = new Beam();
+            cutBeam.StartPoint = new Point(centerX + dx, centerY + dy, topZ + 50);
+            cutBeam.EndPoint = new Point(centerX + dx, centerY + dy, topZ - capParams.CutY);
+            cutBeam.Profile = new Profile { ProfileString = $"{capParams.CutX}*{widthi_cap + 200}" };
+            cutBeam.Material = new Material { MaterialString = capParams.Material };
+            cutBeam.Class = BooleanPart.BooleanOperativeClassName;
+            cutBeam.Position.Rotation = Position.RotationEnum.FRONT;
+            cutBeam.Position.RotationOffset = -global.RotationAngle;
+            cutBeam.Position.Plane = Position.PlaneEnum.MIDDLE;
+            cutBeam.Position.Depth = Position.DepthEnum.MIDDLE;
+
+            if (cutBeam.Insert())
+            {
+                BooleanPart bp = new BooleanPart();
+                bp.Father = capBeam;
+                bp.SetOperativePart(cutBeam);
+                bp.Type = BooleanPart.BooleanTypeEnum.BOOLEAN_CUT;
+
+                if (!bp.Insert())
+                {
+                    // Boolean failed — remove leftover cutting beam
+                    cutBeam.Delete();
+                }
+            }
+        }
+
+        private void CreatePlanTaperCuts(Beam cap, Models.CapParameters capParams, double centerX, double centerY, double topZ, double widthi_cap, double rotationAngle)
+        {
+            double rotRad = rotationAngle * Math.PI / 180.0;
+            Point center = cap.StartPoint; // Beam top center
+            double halfLen = capParams.TopLength / 2.0; // D values are defined at the cap beam ends
+
+            // Top edge (positive Y side): D1 at left end, D3 at right end
+            CreatePlanTaperCutPlane(cap, center, rotRad, halfLen, capParams.D1, capParams.D3, isPositiveSide: true);
+
+            // Bottom edge (negative Y side): D2 at left end, D4 at right end
+            CreatePlanTaperCutPlane(cap, center, rotRad, halfLen, capParams.D2, capParams.D4, isPositiveSide: false);
+        }
+
+        private void CreatePlanTaperCutPlane(Beam cap, Point center, double rotRad, double halfLen, double widthStart, double widthEnd, bool isPositiveSide)
+        {
+            double sign = isPositiveSide ? 1.0 : -1.0;
+
+            // Local coordinates: X along length, Y along width, Z vertical
+            // Point A (left end of cut edge)
+            double xA = -halfLen;
+            double yA = sign * widthStart;
+            double zA = 0;
+
+            // Point B (right end of cut edge)
+            double xB = halfLen;
+            double yB = sign * widthEnd;
+            double zB = 0;
+
+            // Point C (vertical offset from A to define the vertical plane)
+            double xC = xA;
+            double yC = yA;
+            double zC = -500;
+
+            // Rotate and translate to global coordinates
+            Point pA = RotateAndTranslate(center, rotRad, xA, yA, zA);
+            Point pB = RotateAndTranslate(center, rotRad, xB, yB, zB);
+            Point pC = RotateAndTranslate(center, rotRad, xC, yC, zC);
+
+            // Define plane axes
+            Vector vecAB = new Vector(pB.X - pA.X, pB.Y - pA.Y, pB.Z - pA.Z);
+            Vector vecAC = new Vector(pC.X - pA.X, pC.Y - pA.Y, pC.Z - pA.Z);
+
+            // Ensure normal points outward (away from centerline)
+            Vector normal = vecAB.Cross(vecAC);
+            Vector centerToOut = new Vector(pA.X - center.X, pA.Y - center.Y, 0);
+
+            if (normal.Dot(centerToOut) < 0)
+            {
+                vecAC = new Vector(-vecAC.X, -vecAC.Y, -vecAC.Z);
+            }
+
+            CutPlane cut = new CutPlane();
+            cut.Father = cap;
+            cut.Plane = new Plane();
+            cut.Plane.Origin = pA;
+            cut.Plane.AxisX = vecAB;
+            cut.Plane.AxisY = vecAC;
+
+            cut.Insert();
+        }
+
+        private void CreateWidthTaperCuts(Beam cap, Models.CapParameters capParams, double effectiveWidth, double rotationAngle)
+        {
+            double rotRad = rotationAngle * Math.PI / 180.0;
+            Point center = cap.StartPoint; // Beam top center
+            double halfWidth = effectiveWidth / 2.0;
+
+            // Positive Y side (one side of width)
+            CreateWidthTaperCutPlane(cap, center, rotRad, halfWidth, capParams.F, capParams.Depth, capParams.HeightDiff, isPositiveSide: true);
+
+            // Negative Y side (other side of width)
+            CreateWidthTaperCutPlane(cap, center, rotRad, halfWidth, capParams.F, capParams.Depth, capParams.HeightDiff, isPositiveSide: false);
+        }
+
+        private void CreateWidthTaperCutPlane(Beam cap, Point center, double rotRad, double halfWidth, double f, double depth, double heightDiff, bool isPositiveSide)
+        {
+            double sign = isPositiveSide ? 1.0 : -1.0;
+
+            // Local coordinates: X along length, Y along width, Z down from beam top
+            // Point A: at Depth level, at full width edge
+            double xA = 0;
+            double yA = sign * halfWidth;
+            double zA = -depth;
+
+            // Point B: at bottom, width reduced by F
+            double xB = 0;
+            double yB = sign * (halfWidth - f);
+            double zB = -(depth + heightDiff);
+
+            // Point C: offset along length to define the plane (extends full length)
+            double xC = 500;
+            double yC = yA;
+            double zC = zA;
+
+            // Rotate and translate to global coordinates
+            Point pA = RotateAndTranslate(center, rotRad, xA, yA, zA);
+            Point pB = RotateAndTranslate(center, rotRad, xB, yB, zB);
+            Point pC = RotateAndTranslate(center, rotRad, xC, yC, zC);
+
+            // AxisX: along the slope (A -> B)
+            Vector vecAB = new Vector(pB.X - pA.X, pB.Y - pA.Y, pB.Z - pA.Z);
+            // AxisY: along length (A -> C)
+            Vector vecAC = new Vector(pC.X - pA.X, pC.Y - pA.Y, pC.Z - pA.Z);
+
+            // Ensure normal points outward (away from centerline)
+            Vector normal = vecAB.Cross(vecAC);
+            Vector centerToOut = new Vector(pA.X - center.X, pA.Y - center.Y, 0);
+
+            if (normal.Dot(centerToOut) < 0)
+            {
+                vecAC = new Vector(-vecAC.X, -vecAC.Y, -vecAC.Z);
+            }
+
             CutPlane cut = new CutPlane();
             cut.Father = cap;
             cut.Plane = new Plane();
