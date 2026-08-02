@@ -1,4 +1,4 @@
-# Tekla Structure Creator Plugin Installation
+﻿# Tekla Structure Creator Plugin Installation
 
 ## Plugin Overview
 This plugin allows you to create complex foundation structures in Tekla Structures including:
@@ -18,11 +18,11 @@ This plugin allows you to create complex foundation structures in Tekla Structur
 1. Open Command Prompt or PowerShell as Administrator
 2. Create the plugin directory:
    ```
-   mkdir "C:\Program Files\Tekla Structures\2024.0\bin\plugins\Tekla\Model\StructureCreator"
+   mkdir "C:\Program Files\Tekla Structures\2025.0\bin\plugins\Tekla\Model\StructureCreator"
    ```
 3. Copy the plugin DLL:
    ```
-   copy "C:\Temp\TeklaPlugin.dll" "C:\Program Files\Tekla Structures\2024.0\bin\plugins\Tekla\Model\StructureCreator\"
+   copy "C:\Temp\TeklaPlugin.dll" "C:\Program Files\Tekla Structures\2025.0\bin\plugins\Tekla\Model\StructureCreator\"
    ```
 
 ## How to Use the Plugin
@@ -44,7 +44,7 @@ This plugin allows you to create complex foundation structures in Tekla Structur
 - **Cap**: Configure the top beam
 
 ## Requirements
-- Tekla Structures 2024.0
+- Tekla Structures 2025.0
 - .NET Framework 4.8
 - Windows operating system
 

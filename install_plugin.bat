@@ -3,10 +3,10 @@ echo Installing Tekla Structure Creator Plugin...
 echo.
 
 REM Create plugin directory
-mkdir "C:\Program Files\Tekla Structures\2024.0\bin\plugins\Tekla\Model\StructureCreator"
+mkdir "C:\Program Files\Tekla Structures\2025.0\bin\plugins\Tekla\Model\StructureCreator"
 
 REM Copy plugin DLL
-copy "C:\Temp\TeklaPlugin.dll" "C:\Program Files\Tekla Structures\2024.0\bin\plugins\Tekla\Model\StructureCreator\"
+copy "C:\Temp\TeklaPlugin.dll" "C:\Program Files\Tekla Structures\2025.0\bin\plugins\Tekla\Model\StructureCreator\"
 
 echo.
 echo Plugin installed successfully!
